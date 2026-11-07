@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Game Revenue</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="aurora" aria-hidden="true"></div>
+
+<div class="shell">
+  <aside class="sidebar glass">
+    <div class="brand">
+      <span class="brand-mark">◇</span>
+      <div>
+        <strong>Game Revenue</strong>
+        <small>Owner Console</small>
+      </div>
+    </div>
+
+    <nav id="nav" class="nav">
+      <button data-view="dashboard" class="active">Dashboard</button>
+      <button data-view="referral">Referral</button>
+      <button data-view="costs">Biaya Operasional</button>
+      <button data-view="payout">Pencairan</button>
+    </nav>
+
+    <div class="sidebar-actions">
+      <button id="themeToggle" class="ghost">Tema</button>
+      <button id="lockBtn" class="ghost">Kunci Hari Ini</button>
+      <button id="resetBtn" class="ghost danger">Hari Baru</button>
+    </div>
+  </aside>
+
+  <main class="content">
+    <header class="topbar glass">
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageDate" class="muted"></p>
+      </div>
+      <span id="lockBadge" class="badge hidden">Terkunci</span>
+    </header>
+
+    <!-- DASHBOARD -->
+    <section data-page="dashboard" class="page active">
+      <div class="stat-grid">
+        <article class="stat glass"><span>Pendapatan Kotor</span><strong id="sGross">Rp0</strong></article>
+        <article class="stat glass"><span>Fee Pencairan</span><strong id="sFee">Rp0</strong></article>
+        <article class="stat glass"><span>Biaya Operasional</span><strong id="sOps">Rp0</strong></article>
+        <article class="stat glass"><span>Gaji Admin</span><strong id="sSalary">Rp0</strong></article>
+        <article class="stat glass accent"><span>Bersih Owner</span><strong id="sNet">Rp0</strong></article>
+      </div>
+
+      <div class="chart-grid">
+        <section class="panel glass">
+          <h2>Deposit per Admin</h2>
+          <canvas id="chartDeposit" height="220"></canvas>
+        </section>
+        <section class="panel glass">
+          <h2>Komposisi</h2>
+          <canvas id="chartComposition" height="220"></canvas>
+        </section>
+      </div>
+
+      <section class="panel glass">
+        <h2>Rincian Gaji</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Admin</th><th>Member</th><th>Tipe</th><th class="num">Deposit</th><th class="num">Gaji</th></tr></thead>
+            <tbody id="salaryRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <!-- REFERRAL (admin + member digabung) -->
+    <section data-page="referral" class="page">
+      <section class="panel glass">
+        <h2>Tambah Admin</h2>
+        <form id="adminForm" class="inline-form">
+          <input id="adminName" placeholder="Nama admin referral" required>
+          <button class="primary" type="submit">Tambah</button>
+        </form>
+      </section>
+
+      <section class="panel glass">
+        <h2>Tambah Member</h2>
+        <form id="memberForm" class="inline-form">
+          <input id="memberName" placeholder="Username" required>
+          <select id="memberAdmin" required></select>
+          <select id="memberType">
+            <option value="first">Deposit pertama (50%)</option>
+            <option value="repeat">Redeposit (40%)</option>
+          </select>
+          <input id="memberDeposit" type="number" min="0" placeholder="Nominal" required>
+          <button class="primary" type="submit">Tambah</button>
+        </form>
+      </section>
+
+      <section class="panel glass">
+        <h2>Daftar Referral</h2>
+        <div id="referralList" class="referral-list"></div>
+      </section>
+    </section>
+
+    <!-- COSTS -->
+    <section data-page="costs" class="page">
+      <section class="panel glass">
+        <h2>Biaya Operasional</h2>
+        <form id="costForm" class="inline-form">
+          <input id="costDesc" placeholder="Keterangan" required>
+          <input id="costAmount" type="number" min="0" placeholder="Nominal" required>
+          <button class="primary" type="submit">Tambah</button>
+        </form>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Keterangan</th><th class="num">Nominal</th><th></th></tr></thead>
+            <tbody id="costRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <!-- PAYOUT -->
+    <section data-page="payout" class="page">
+      <section class="panel glass">
+        <h2>Pencairan</h2>
+        <p class="muted">Fee flat Rp1.800 per hari bila ada pencairan (tidak berlipat).</p>
+        <form id="payoutForm" class="inline-form">
+          <input id="payoutCount" type="number" min="0" value="0" required>
+          <button class="primary" type="submit">Simpan</button>
+        </form>
+        <p id="payoutInfo" class="muted"></p>
+      </section>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
