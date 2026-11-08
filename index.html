@@ -9,8 +9,18 @@
 <body>
 <div class="aurora" aria-hidden="true"></div>
 
+<!-- TOMBOL HAMBURGER -->
+<button id="menuToggle" class="menu-toggle glass" aria-label="Toggle Menu">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <line x1="3" y1="6" x2="21" y2="6"></line>
+    <line x1="3" y1="12" x2="21" y2="12"></line>
+    <line x1="3" y1="18" x2="21" y2="18"></line>
+  </svg>
+</button>
+
 <div class="shell">
-  <aside class="sidebar glass">
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="sidebar glass">
     <div class="brand">
       <span class="brand-mark">◇</span>
       <div>
@@ -19,7 +29,6 @@
       </div>
     </div>
 
-    <!-- NAVIGASI -->
     <nav id="nav" class="nav">
       <button data-view="dashboard" class="active">Dashboard</button>
       <button data-view="referral">Referral</button>
@@ -27,17 +36,17 @@
       <button data-view="payout">Pencairan</button>
     </nav>
 
-    <!-- ACTIONS -->
     <div class="sidebar-actions">
       <div class="theme-switch">
-        <button id="themeLight" class="ghost btn-theme">☀️ Light</button>
-        <button id="themeDark" class="ghost btn-theme active">🌙 Dark</button>
+        <button id="themeLight" class="ghost btn-theme">Light</button>
+        <button id="themeDark" class="ghost btn-theme active">Dark</button>
       </div>
       <button id="lockBtn" class="ghost mt-8">Kunci Hari Ini</button>
       <button id="resetBtn" class="ghost danger">Hari Baru</button>
     </div>
   </aside>
 
+  <!-- MAIN CONTENT -->
   <main class="content">
     <header class="topbar glass">
       <div>
