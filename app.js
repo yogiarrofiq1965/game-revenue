@@ -167,22 +167,4 @@ function render() {
 
 /* ===== Navigasi & Tema ===== */
 const PAGE_TITLE = {
-  dashboard: 'Dashboard', referral: 'Referral',
-  costs: 'Biaya Operasional', payout: 'Pencairan'
-};
-
-function setPage(name) {
-  document.querySelectorAll('#nav button').forEach(b =>
-    b.classList.toggle('active', b.dataset.view === name));
-  document.querySelectorAll('.page').forEach(p =>
-    p.classList.toggle('active', p.dataset.page === name));
-  setText('#pageTitle', PAGE_TITLE[name]);
-  
-  if (window.innerWidth <= 900) {
-    $('#sidebar').classList.add('hidden');
-  }
-}
-
-$('#nav').addEventListener('click', e => {
-  const btn = e.target.closest('button[data-view]');
-  if (
+  dashboard: 'Dashboard', referral: 'Referral
