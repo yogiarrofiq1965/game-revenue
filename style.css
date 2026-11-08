@@ -50,24 +50,24 @@ body{
   border-radius:var(--radius);
 }
 
-/* Tombol Hamburger */
+/* Tombol Hamburger (Diposisikan relatif terhadap Sidebar) */
 .menu-toggle {
-  position: fixed;
+  position: absolute;
   top: 20px;
-  left: 20px;
-  z-index: 1000;
-  width: 44px;
-  height: 44px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   color: var(--text);
-  border-radius: 12px;
+  border-radius: 10px;
+  background: var(--glass-strong);
+  border: 1px solid var(--stroke);
+  z-index: 1001;
 }
-.menu-toggle:hover {
-  border-color: var(--accent);
-}
+.menu-toggle:hover { border-color: var(--accent); }
 
 /* Layout */
 .shell{
@@ -77,18 +77,17 @@ body{
 
 /* Sidebar */
 .sidebar{
-  width:240px;padding:20px;display:flex;flex-direction:column;gap:24px;
+  width:250px;padding:20px;display:flex;flex-direction:column;gap:24px;
   height:calc(100vh - 40px);position:sticky;top:20px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-left: 50px; /* Memberi ruang untuk tombol hamburger */
 }
 .sidebar.hidden {
-  margin-left: -290px; /* Menggeser sidebar ke kiri luar layar */
+  margin-left: -270px; /* Menggeser sidebar ke kiri luar layar (termasuk tombol) */
   opacity: 0;
   pointer-events: none;
 }
 
-.brand{display:flex;gap:10px;align-items:center; margin-top: 10px;}
+.brand{display:flex;gap:10px;align-items:center; margin-top: 5px; padding-right: 45px;}
 .brand-mark{font-size:24px;color:var(--accent); line-height: 1;}
 .brand strong{font-size: 15px;}
 .brand small{display:block;color:var(--muted);font-size:11px}
@@ -210,37 +209,28 @@ td .mini{
 .mobile-header { display: none; } 
 
 @media (max-width: 900px) {
-  /* Container Utama Mobile */
   .shell { padding: 0; display: block; }
   .topbar { display: none; }
-
-  /* Posisi Tombol Garis 3 */
-  .menu-toggle {
-    top: 16px; left: 16px; width: 40px; height: 40px;
-    background: var(--glass); border: 1px solid var(--stroke);
-  }
-
-  /* Sidebar Meluncur dari Kiri */
-  .sidebar {
-    position: fixed;
-    top: 0; left: 0;
-    width: 260px; height: 100dvh;
-    margin-left: 0; padding-top: 80px;
-    border-radius: 0 20px 20px 0;
-    z-index: 999;
-    transform: translateX(0);
-    opacity: 1;
-  }
   
-  /* Sembunyikan sidebar dengan menggesernya ke kiri luar layar */
-  .sidebar.hidden { 
-    transform: translateX(-100%);
-    opacity: 0; 
-    margin-left: 0; /* Reset margin di mobile */
+  /* Sidebar Overlay Penuh */
+  .sidebar {
+    width: 260px; height: 100dvh; position: fixed;
+    top: 0; left: 0; padding-top: 20px;
+    border-radius: 0 20px 20px 0; border-left: none;
+    z-index: 999;
   }
 
-  /* Content Area Mobile */
   .content { padding: 16px; gap: 16px; margin-top: 56px; }
+
+  /* Tombol Garis 3 (Tampil jika menu tertutup) */
+  .menu-toggle {
+    position: fixed;
+    top: 16px; left: 16px;
+    transform: translateX(calc(100vw - 56px)); /* Menggeser ke kanan luar sidebar */
+  }
+  .sidebar.hidden .menu-toggle {
+    transform: translateX(0); /* Menggeser ke kiri layar HP */
+  }
 
   /* Header Mobile */
   .mobile-header {
@@ -261,7 +251,6 @@ td .mini{
   .stat { padding: 16px 14px; flex-direction: column; align-items: flex-start; gap: 12px; }
   .stat.full-width { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; }
   
-  /* Ikon pada Kartu Statistik */
   .stat-icon {
     width: 36px; height: 36px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
