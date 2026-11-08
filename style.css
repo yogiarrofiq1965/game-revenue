@@ -96,10 +96,10 @@ body{
   transform: translateX(0);
 }
 
+/* PERUBAHAN: Overlay tanpa blur */
 .drawer-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.6);
   z-index: 999;
   opacity: 0;
   pointer-events: none;
@@ -415,13 +415,11 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
 
 /* ================= RESPONSIVE (MOBILE) ================= */
 @media (max-width: 899px) {
-  /* Form jadi bersusun ke bawah */
   .inline-form input, .inline-form select, .inline-form .primary { 
     width: 100%; 
     min-width: 100%; 
   }
   
-  /* Kartu statistik menyesuaikan layar kecil */
   .stats-grid {
     grid-template-columns: 1fr; 
     gap: 16px;
@@ -434,14 +432,12 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     border: 1px solid var(--glass-border);
   }
 
-  /* Tabel & Grafik tetap tampil dengan scroll horizontal */
   .table-wrap {
     margin: 0 -24px;
     padding: 0 24px;
     width: calc(100% + 48px);
   }
 
-  /* Grid Referral jadi 1 kolom */
   .member-row {
     grid-template-columns: 1fr auto;
     grid-template-areas: "name type" "dep salary" "del del";
@@ -454,7 +450,6 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   .member-salary { grid-area: salary; justify-self: end; }
   .member-row .mini { grid-area: del; justify-self: end; margin-top: 4px; width: 100%; }
   
-  /* Penyesuaian padding panel di HP */
   .panel { padding: 16px; }
   .table-wrap { margin: 0 -16px; padding: 0 16px; width: calc(100% + 32px); }
 }
