@@ -205,17 +205,74 @@ td .mini{
 [data-theme="light"] .member-type.first{ color:#0369a1; border-color:rgba(3,105,161,.35); background:rgba(3,105,161,.08); }
 [data-theme="light"] .member-type.repeat{ color:#7e22ce; border-color:rgba(126,34,206,.35); background:rgba(126,34,206,.08); }
 
-/* Responsive */
-@media(max-width: 900px){
-  .shell { padding: 16px; }
-  .chart-grid { grid-template-columns: 1fr; }
-  .sidebar {
-    width: 100%; height: auto; position: fixed; top: 0; left: 0; z-index: 99;
-    margin-left: 0; padding-top: 80px; border-radius: 0; border: none; border-bottom: 1px solid var(--stroke);
+/* =========================================
+   MOBILE TAMPILAN (Di bawah 900px)
+   ========================================= */
+.mobile-header { display: none; } /* Sembunyikan di desktop */
+
+@media (max-width: 900px) {
+  .shell { padding: 0; display: block; }
+  .topbar { display: none; }
+  .menu-toggle {
+    top: 16px; left: 16px; width: 40px; height: 40px;
+    background: var(--glass); border: 1px solid var(--stroke);
+    z-index: 1000; border-radius: 50%;
   }
-  .sidebar.hidden { transform: translateY(-100%); opacity: 0; }
-  .menu-toggle { top: 16px; left: 16px; }
+  .sidebar {
+    width: 260px; height: 100vh; position: fixed;
+    top: 0; left: 0; margin-left: 0; padding-top: 80px;
+    border-radius: 0 20px 20px 0; border-left: none;
+    z-index: 999;
+  }
+  .sidebar.hidden { transform: translateX(-100%); opacity: 0; }
+  .content { padding: 16px; gap: 16px; margin-top: 10px; }
+
+  /* Header Mobile */
+  .mobile-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 20px; margin-bottom: 8px;
+  }
+  .mobile-greeting { display: flex; flex-direction: column; }
+  .mobile-greeting span { font-size: 12px; color: var(--muted); }
+  .mobile-greeting strong { font-size: 20px; color: var(--accent); margin-top: 4px; }
+  .mobile-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--glass-strong); display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--stroke); color: var(--text);
+  }
+
+  /* Grid Statistik 2x2 */
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat { padding: 16px 14px; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .stat.full-width { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; }
+  
+  /* Ikon pada Kartu Statistik */
+  .stat-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .icon-gross { background: rgba(56,189,248,.15); color: #38bdf8; }
+  .icon-salary { background: rgba(168,85,247,.15); color: #a855f7; }
+  .icon-ops { background: rgba(244,114,182,.15); color: #f472b6; }
+  .icon-fee { background: rgba(245,158,11,.15); color: #f59e0b; }
+  .icon-net { background: rgba(34,197,94,.15); color: #22c55e; width: 48px; height: 48px; border-radius: 12px; }
+  
+  .stat-info { display: flex; flex-direction: column; gap: 4px; }
+  .stat-info span { font-size: 11px; }
+  .stat-info strong { font-size: 16px; }
+  
+  .chart-grid { grid-template-columns: 1fr; gap: 16px; }
+  .panel { padding: 16px; }
+  
+  .inline-form input, .inline-form select { min-width: 100%; }
+  .inline-form .primary { width: 100%; margin-top: 4px; }
 }
+
+@media (max-width: 400px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .stat.full-width { flex-direction: column; align-items: flex-start; }
+}
+
 @media (max-width: 600px) {
   .member-row {
     grid-template-columns: 1fr auto;
