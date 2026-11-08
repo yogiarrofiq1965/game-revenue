@@ -351,7 +351,7 @@ body{
 .primary:hover{ transform: translateY(-2px); box-shadow: 0 6px 20px var(--accent-glow); }
 
 .table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px; min-width: 600px;}
 th,td{padding:14px 10px;text-align:left;border-bottom:1px solid var(--card-border)}
 th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1px}
 .num{text-align:right}
@@ -392,6 +392,46 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
 /* Chart Grid */
 .chart-grid{display:grid;grid-template-columns:1fr;gap:20px}
 
+/* ================= FITUR CEKLIS GAJI ================= */
+.check-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--muted);
+  background: transparent;
+  color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.2s;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.check-btn:hover {
+  border-color: var(--accent);
+}
+.check-btn.active {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+/* Efek visual saat member sudah lunas */
+.member-row.paid .member-name,
+.member-row.paid .member-salary,
+.member-row.paid .muted {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.member-row.paid .member-type {
+  opacity: 0.3;
+}
+
 /* ================= RESPONSIVE (MOBILE) ================= */
 @media (max-width: 899px) {
   .inline-form input, .inline-form select, .inline-form .primary { 
@@ -411,26 +451,39 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     border: 1px solid var(--card-border);
   }
 
+  /* Form dan tabel di mobile */
   .table-wrap {
-    margin: 0 -24px;
-    padding: 0 24px;
-    width: calc(100% + 48px);
+    margin: 0 -16px;
+    padding: 0 16px;
+    width: calc(100% + 32px);
   }
+  
+  .panel { padding: 16px; }
 
+  /* Grid Referral Mobile - Perbaikan Error Berdesakan */
   .member-row {
     grid-template-columns: 1fr auto;
-    grid-template-areas: "name type" "dep salary" "del del";
+    grid-template-areas: 
+      "name type" 
+      "dep salary" 
+      "del del";
     row-gap: 8px;
     padding: 12px;
   }
-  .member-name { grid-area: name; }
-  .member-type { grid-area: type; justify-self: end; }
+  .member-name { 
+    grid-area: name; 
+    align-items: flex-start; /* Agar ceklis dan nama sejajar atas jika nama panjang */
+  }
+  .member-type { grid-area: type; justify-self: end; align-self: start;}
   .member-row .muted { grid-area: dep; font-size: 12px; }
   .member-salary { grid-area: salary; justify-self: end; }
-  .member-row .mini { grid-area: del; justify-self: end; margin-top: 4px; width: 100%; }
-  
-  .panel { padding: 16px; }
-  .table-wrap { margin: 0 -16px; padding: 0 16px; width: calc(100% + 32px); }
+  .member-row .mini { 
+    grid-area: del; 
+    justify-self: stretch; /* Tombol hapus jadi lebar penuh di bawah */
+    margin-top: 8px; 
+    text-align: center;
+    padding: 8px;
+  }
 }
 
 /* ================= RESPONSIVE (DESKTOP) - EFFECT GLASS ================= */
@@ -478,43 +531,4 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   }
 
   .chart-grid { grid-template-columns: 1fr 1fr; }
-}
-
-/* ================= FITUR CEKLIS GAJI ================= */
-.check-btn {
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  border: 1px solid var(--muted);
-  background: transparent;
-  color: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  margin-right: 8px;
-  font-size: 12px;
-  font-weight: bold;
-  transition: all 0.2s;
-  vertical-align: middle;
-}
-.check-btn:hover {
-  border-color: var(--accent);
-}
-.check-btn.active {
-  background: #10b981;
-  border-color: #10b981;
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
-}
-
-/* Efek visual saat member sudah lunas */
-.member-row.paid .member-name,
-.member-row.paid .member-salary,
-.member-row.paid .muted {
-  text-decoration: line-through;
-  opacity: 0.5;
-}
-.member-row.paid .member-type {
-  opacity: 0.3;
 }
