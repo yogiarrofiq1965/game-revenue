@@ -10,18 +10,17 @@
 <div class="aurora" aria-hidden="true"></div>
 
 <div class="shell">
-  <!-- SIDEBAR -->
-  <aside id="sidebar" class="sidebar glass hidden">
-    
-    <!-- TOMBOL HAMBURGER (DIPINDAH KE DALAM) -->
-    <button id="menuToggle" class="menu-toggle glass" aria-label="Toggle Menu">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-        <line x1="3" y1="6" x2="21" y2="6"></line>
-        <line x1="3" y1="12" x2="21" y2="12"></line>
-        <line x1="3" y1="18" x2="21" y2="18"></line>
-      </svg>
-    </button>
+  <!-- Tombol hamburger DIPINDAH KE LUAR sidebar agar selalu bisa diklik -->
+  <button id="menuToggle" class="menu-toggle glass" aria-label="Toggle Menu">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="3" y1="6" x2="21" y2="6"></line>
+      <line x1="3" y1="12" x2="21" y2="12"></line>
+      <line x1="3" y1="18" x2="21" y2="18"></line>
+    </svg>
+  </button>
 
+  <!-- SIDEBAR: tanpa class "hidden" default -->
+  <aside id="sidebar" class="sidebar glass">
     <div class="brand">
       <span class="brand-mark">◇</span>
       <div>
