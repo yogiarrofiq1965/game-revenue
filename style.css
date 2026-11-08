@@ -73,20 +73,18 @@ body{
 .shell{
   position:relative;z-index:1;
   display:flex;gap:20px;padding:20px;min-height:100vh;
-  transition: padding-left 0.3s ease;
 }
 
 /* Sidebar */
 .sidebar{
   width:240px;padding:20px;display:flex;flex-direction:column;gap:24px;
   height:calc(100vh - 40px);position:sticky;top:20px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-  margin-left: 50px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-left: 50px; /* Memberi ruang untuk tombol hamburger */
 }
 .sidebar.hidden {
-  transform: translateX(-150%);
+  margin-left: -290px; /* Menggeser sidebar ke kiri luar layar */
   opacity: 0;
-  position: absolute;
   pointer-events: none;
 }
 
@@ -214,8 +212,6 @@ td .mini{
 @media (max-width: 900px) {
   /* Container Utama Mobile */
   .shell { padding: 0; display: block; }
-  
-  /* Sembunyikan header desktop di HP */
   .topbar { display: none; }
 
   /* Posisi Tombol Garis 3 */
@@ -224,14 +220,24 @@ td .mini{
     background: var(--glass); border: 1px solid var(--stroke);
   }
 
-  /* Sidebar Overlay Penuh */
+  /* Sidebar Meluncur dari Kiri */
   .sidebar {
-    width: 260px; height: 100dvh; position: fixed;
-    top: 0; left: 0; margin-left: 0; padding-top: 80px;
-    border-radius: 0 20px 20px 0; border-left: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 260px; height: 100dvh;
+    margin-left: 0; padding-top: 80px;
+    border-radius: 0 20px 20px 0;
     z-index: 999;
+    transform: translateX(0);
+    opacity: 1;
   }
-  .sidebar.hidden { transform: translateX(-100%); opacity: 0; }
+  
+  /* Sembunyikan sidebar dengan menggesernya ke kiri luar layar */
+  .sidebar.hidden { 
+    transform: translateX(-100%);
+    opacity: 0; 
+    margin-left: 0; /* Reset margin di mobile */
+  }
 
   /* Content Area Mobile */
   .content { padding: 16px; gap: 16px; margin-top: 56px; }
