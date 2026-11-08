@@ -12,7 +12,12 @@ let state = load();
 function load() {
   try {
     const raw = localStorage.getItem(STORE);
-    return raw ? { ...blank(), ...JSON.parse(raw) } : blank();
+    const parsed = raw ? JSON.parse(raw) : blank();
+    // Migrasi: pastikan semua member lama punya properti isPaid
+    if (parsed.members) {
+      parsed.members = parsed.members.map(m => ({ ...m, isPaid: m.isPaid || false }));
+    }
+    return { ...blank(), ...parsed };
   } catch { return blank(); }
 }
 const save = () => localStorage.setItem(STORE, JSON.stringify(state));
@@ -25,10 +30,11 @@ const salaryOf = m => Math.round(m.deposit * RATE[m.type]);
 
 function metrics() {
   const gross = state.members.reduce((s, m) => s + m.deposit, 0);
-  const salary = state.members.reduce((s, m) => s + salaryOf(m), 0);
+  // Hanya hitung gaji yang BELUM dibayar (isPaid === false)
+  const unpaidSalary = state.members.filter(m => !m.isPaid).reduce((s, m) => s + salaryOf(m), 0);
   const ops = state.costs.reduce((s, c) => s + c.amount, 0);
   const fee = state.payout > 0 ? FEE : 0;
-  return { gross, salary, ops, fee, net: gross - fee - ops - salary };
+  return { gross, salary: unpaidSalary, ops, fee, net: gross - fee - ops - unpaidSalary };
 }
 
 /* ===== Render ===== */
@@ -41,36 +47,36 @@ const textColor = () => getComputedStyle(document.body).color;
 function drawStats() {
   const m = state.lock || metrics();
   
-  // Update kartu statistik
   setText('#sGross', rp(m.gross));
   setText('#sFee', rp(m.fee));
   setText('#sOps', rp(m.ops));
   setText('#sSalary', rp(m.salary));
   setText('#sNet', rp(m.net));
 
-  // Badge terkunci
   const badge = $('#lockBadge');
   if (badge) badge.classList.toggle('hidden', !isLocked());
   
-  // Tanggal hari ini
   setText('#pageDate', new Date().toLocaleDateString('id-ID',
     { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
 }
 
 function drawSalaryRows() {
+  // Di dashboard, tampilkan semua gaji beserta statusnya
   const rows = state.members.map(m => {
     const admin = state.admins.find(a => a.id === m.adminId);
-    return `<tr>
+    const status = m.isPaid ? '<span style="color:#10b981">Lunas</span>' : '<span style="color:#f59e0b">Pending</span>';
+    return `<tr style="${m.isPaid ? 'opacity: 0.5' : ''}">
       <td>${admin?.name ?? '—'}</td>
       <td>${m.name}</td>
       <td>${m.type === 'first' ? 'Deposit Pertama' : 'Redeposit'}</td>
       <td class="num">${rp(m.deposit)}</td>
       <td class="num">${rp(salaryOf(m))}</td>
+      <td>${status}</td>
     </tr>`;
   }).join('');
   
   const el = $('#salaryRows');
-  if (el) el.innerHTML = rows || '<tr><td colspan="5" class="muted">Belum ada member.</td></tr>';
+  if (el) el.innerHTML = rows || '<tr><td colspan="6" class="muted">Belum ada member.</td></tr>';
 }
 
 function drawReferral() {
@@ -86,26 +92,47 @@ function drawReferral() {
 
   const list = $('#referralList');
   if (!list) return;
+  
   list.innerHTML = state.admins.length
     ? state.admins.map(a => {
         const members = state.members.filter(m => m.adminId === a.id);
         const total = members.reduce((s, m) => s + m.deposit, 0);
-        const rows = members.map(m => `
-          <div class="member-row">
-            <span class="member-name">${m.name}</span>
+        
+        // Hitung sisa gaji yang belum dibayar untuk admin ini
+        const unpaid = members.filter(m => !m.isPaid).reduce((s, m) => s + salaryOf(m), 0);
+
+        const rows = members.map(m => {
+          const isPaid = m.isPaid;
+          return `<div class="member-row ${isPaid ? 'paid' : ''}">
+            <span class="member-name">
+              <button class="check-btn ${isPaid ? 'active' : ''}" data-toggle-paid="${m.id}" title="${isPaid ? 'Batal Lunas' : 'Tandai Lunas'}">
+                ${isPaid ? '✓' : ''}
+              </button>
+              ${m.name}
+            </span>
             <span class="member-type ${m.type}">
               ${m.type === 'first' ? 'Deposit Pertama' : 'Redeposit'}
             </span>
             <span class="muted">${rp(m.deposit)}</span>
             <span class="member-salary">${rp(salaryOf(m))}</span>
             <button class="mini" data-del-member="${m.id}">Hapus</button>
-          </div>`).join('');
+          </div>`;
+        }).join('');
+
         return `<div class="ref-admin">
           <header>
-            <strong>${a.name}</strong>
-            <span>${members.length} member · ${rp(total)}
-              <button class="mini" data-del-admin="${a.id}">Hapus admin</button>
-            </span>
+            <div>
+              <strong>${a.name}</strong>
+              <div style="font-size:12px; color:var(--muted); margin-top:4px;">
+                ${members.length} member · Total Deposit: ${rp(total)}
+              </div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:11px; color:var(--muted); text-transform:uppercase;">Sisa Gaji</div>
+              <strong style="color:${unpaid > 0 ? 'var(--accent)' : '#10b981'}">${rp(unpaid)}</strong>
+              <br>
+              <button class="mini" style="margin-top:8px" data-del-admin="${a.id}">Hapus admin</button>
+            </div>
           </header>
           <div class="members">${rows || '<span class="muted">Belum ada member.</span>'}</div>
         </div>`;
@@ -167,7 +194,7 @@ function drawCharts() {
     charts.composition = new Chart(compositionCanvas, {
       type: 'doughnut',
       data: {
-        labels: ['Gaji Admin', 'Biaya Ops', 'Fee', 'Bersih'],
+        labels: ['Sisa Gaji', 'Biaya Ops', 'Fee', 'Bersih'],
         datasets: [{
           data: [m.salary, m.ops, m.fee, Math.max(m.net, 0)],
           backgroundColor: ['#a855f7', '#f59e0b', '#f472b6', '#22c55e'],
@@ -186,11 +213,10 @@ function render() {
 
 /* ===== Navigasi & Sidebar Toggle ===== */
 const PAGE_TITLE = {
-  dashboard: 'Dashboards', referral: 'Referral',
-  costs: 'Riwayat (Biaya)', payout: 'Penarikan (Payout)'
+  dashboard: 'Dashboard', referral: 'Referral & Member',
+  costs: 'Biaya Operasional', payout: 'Pencairan'
 };
 
-// Referensi Elemen Sidebar
 const menuToggle = document.getElementById('menuToggle');
 const closeSidebar = document.getElementById('closeSidebar');
 const drawerOverlay = document.getElementById('drawerOverlay');
@@ -206,12 +232,10 @@ function toggleSidebar(open) {
   }
 }
 
-// Event Listener untuk Sidebar
 if (menuToggle) menuToggle.addEventListener('click', () => toggleSidebar(true));
 if (closeSidebar) closeSidebar.addEventListener('click', () => toggleSidebar(false));
 if (drawerOverlay) drawerOverlay.addEventListener('click', () => toggleSidebar(false));
 
-// Navigasi Halaman
 function setPage(name) {
   document.querySelectorAll('#nav button').forEach(b =>
     b.classList.toggle('active', b.dataset.view === name));
@@ -220,7 +244,6 @@ function setPage(name) {
   
   setText('#pageTitle', PAGE_TITLE[name] || 'Dashboard');
 
-  // Tutup sidebar otomatis di HP setelah memilih menu
   if (window.innerWidth <= 900) {
     toggleSidebar(false);
   }
@@ -231,7 +254,6 @@ $('#nav').addEventListener('click', e => {
   if (btn) {
     setPage(btn.dataset.view);
   } else {
-    // Jika menu yang tidak ada dataview-nya diklik di HP, tetap tutup sidebar
     if (window.innerWidth <= 900) toggleSidebar(false);
   }
 });
@@ -276,7 +298,8 @@ $('#memberForm').addEventListener('submit', e => {
   const type = $('#memberType').value;
   const deposit = Number($('#memberDeposit').value);
   if (!name || !adminId || !(deposit > 0)) return;
-  state.members.push({ id: id(), name, adminId, type, deposit });
+  // Tambahkan isPaid: false saat membuat member baru
+  state.members.push({ id: id(), name, adminId, type, deposit, isPaid: false });
   $('#memberName').value = '';
   $('#memberDeposit').value = '';
   save(); render();
@@ -301,9 +324,24 @@ $('#payoutForm').addEventListener('submit', e => {
   save(); render();
 });
 
-/* ===== Hapus Data (event delegation) ===== */
+/* ===== Aksi Klik (Hapus & Toggle Paid) ===== */
 document.addEventListener('click', e => {
   const t = e.target;
+  
+  // Handle Toggle Paid (Ceklis Gaji)
+  const toggleBtn = t.closest('[data-toggle-paid]');
+  if (toggleBtn) {
+    if (blocked()) return;
+    const memberId = toggleBtn.dataset.togglePaid;
+    const member = state.members.find(m => m.id === memberId);
+    if (member) {
+      member.isPaid = !member.isPaid;
+      save(); render();
+    }
+    return;
+  }
+
+  // Handle Delete
   if (blocked()) return;
   if (t.dataset.delAdmin) {
     state.admins = state.admins.filter(a => a.id !== t.dataset.delAdmin);
