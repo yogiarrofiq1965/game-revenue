@@ -1,327 +1,472 @@
-'use strict';
-
-/* ===== Konstanta domain ===== */
-const FEE = 1800;
-const RATE = { first: 0.5, repeat: 0.4 };
-const STORE = 'game-revenue-v1';
-
-/* ===== State ===== */
-const blank = () => ({ admins: [], members: [], costs: [], payout: 0, lock: null });
-let state = load();
-
-function load() {
-  try {
-    const raw = localStorage.getItem(STORE);
-    return raw ? { ...blank(), ...JSON.parse(raw) } : blank();
-  } catch { return blank(); }
-}
-const save = () => localStorage.setItem(STORE, JSON.stringify(state));
-const id = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
-const rp = n => 'Rp' + (n || 0).toLocaleString('id-ID');
-const isLocked = () => state.lock !== null;
-
-/* ===== Rumus murni ===== */
-const salaryOf = m => Math.round(m.deposit * RATE[m.type]);
-
-function metrics() {
-  const gross = state.members.reduce((s, m) => s + m.deposit, 0);
-  const salary = state.members.reduce((s, m) => s + salaryOf(m), 0);
-  const ops = state.costs.reduce((s, c) => s + c.amount, 0);
-  const fee = state.payout > 0 ? FEE : 0;
-  return { gross, salary, ops, fee, net: gross - fee - ops - salary };
+:root {
+  --bg: #161b22;
+  --bg2: #0d1117;
+  --glass: rgba(30, 36, 50, 0.6);
+  --glass-strong: rgba(40, 48, 68, 0.8);
+  --stroke: rgba(255,255,255,.08);
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --accent: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.4);
+  --danger: #f87171;
+  --radius: 16px;
+  --shadow: 0 8px 32px rgba(0,0,0,.4);
 }
 
-/* ===== Render helpers ===== */
-const $ = sel => document.querySelector(sel);
-const setText = (sel, v) => { const el = $(sel); if (el) el.textContent = v; };
-
-const charts = { deposit: null, composition: null };
-const textColor = () => getComputedStyle(document.body).color;
-
-function drawStats() {
-  const m = state.lock || metrics();
-  setText('#sGross', rp(m.gross));
-  setText('#sFee', rp(m.fee));
-  setText('#sOps', rp(m.ops));
-  setText('#sSalary', rp(m.salary));
-  setText('#sNet', rp(m.net));
-
-  // Ringkasan di header mobile
-  setText('#mobileNet', rp(m.net));
-
-  const badge = $('#lockBadge');
-  if (badge) badge.classList.toggle('hidden', !isLocked());
-  setText('#pageDate', new Date().toLocaleDateString('id-ID',
-    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
+[data-theme="light"] {
+  --bg: #f1f5f9;
+  --bg2: #e2e8f0;
+  --glass: rgba(255,255,255,.65);
+  --glass-strong: rgba(255,255,255,.9);
+  --stroke: rgba(15,23,42,.06);
+  --text: #0f172a;
+  --muted: #64748b;
+  --accent: #4f46e5;
+  --accent-glow: rgba(79, 70, 229, 0.3);
+  --danger: #dc2626;
+  --shadow: 0 8px 32px rgba(15,23,42,.08);
 }
 
-function drawSalaryRows() {
-  const rows = state.members.map(m => {
-    const admin = state.admins.find(a => a.id === m.adminId);
-    return `<tr>
-      <td>${admin?.name ?? '—'}</td>
-      <td>${m.name}</td>
-      <td>${m.type === 'first' ? 'Deposit Pertama' : 'Redeposit'}</td>
-      <td class="num">${rp(m.deposit)}</td>
-      <td class="num">${rp(salaryOf(m))}</td>
-    </tr>`;
-  }).join('');
-  const el = $('#salaryRows');
-  if (el) el.innerHTML = rows || '<tr><td colspan="5" class="muted">Belum ada member.</td></tr>';
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color:var(--text);
+  background:var(--bg);
+  min-height:100dvh;
+  overflow-x:hidden;
 }
 
-function drawReferral() {
-  const adminOptions = state.admins.map(a =>
-    `<option value="${a.id}">${a.name}</option>`).join('');
+/* Aurora Background lebih halus */
+.aurora{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(600px 400px at 10% 0%,var(--accent-glow),transparent 60%),
+    radial-gradient(500px 400px at 90% 20%,rgba(168,85,247,.2),transparent 60%);
+  filter:blur(60px);
+  opacity: 0.6;
+}
 
-  const memberAdmin = $('#memberAdmin');
-  if (memberAdmin) {
-    memberAdmin.innerHTML =
-      `<option value="" disabled ${state.admins.length ? '' : 'selected'}>-- Pilih Admin --</option>` +
-      adminOptions;
+.glass{
+  background:var(--glass);
+  border:1px solid var(--stroke);
+  box-shadow:var(--shadow);
+  backdrop-filter:blur(16px) saturate(150%);
+  -webkit-backdrop-filter:blur(16px) saturate(150%);
+}
+
+/* ================= LAYOUT ================= */
+.app-container {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 100dvh;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+  width: 280px;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 1000;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 20px;
+  border-radius: 0;
+  border-right: 1px solid var(--stroke);
+  border-top: none; border-bottom: none; border-left: none;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.drawer-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+.drawer-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.logo-area {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: var(--text);
+  text-shadow: 0 0 10px var(--accent-glow);
+}
+.logo-area strong { color: #fbbf24; } /* Warna emas mirip logo */
+
+.close-btn {
+  color: var(--muted);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nav-section {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin: 16px 0 8px 12px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+.nav-item:hover {
+  background: var(--glass);
+}
+.nav-item.active {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+.nav-icon {
+  width: 20px; height: 20px;
+  opacity: 0.7;
+}
+.nav-item.active .nav-icon { opacity: 1; }
+.chevron {
+  width: 16px; height: 16px;
+  margin-left: auto;
+  opacity: 0.5;
+}
+
+.sidebar-actions {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--stroke);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.theme-switch {
+  display: flex; gap: 4px; background: var(--glass);
+  padding: 4px; border-radius: 10px; border: 1px solid var(--stroke);
+}
+.btn-theme {
+  flex: 1; border: none; background: transparent; color: var(--muted);
+  padding: 8px; font-size: 12px; border-radius: 8px; cursor: pointer;
+}
+.btn-theme.active {
+  background: var(--accent); color: #fff;
+  box-shadow: 0 2px 8px var(--accent-glow);
+}
+.ghost {
+  background: var(--glass); border: 1px solid var(--stroke); color: var(--text);
+  padding: 10px; border-radius: 10px; cursor: pointer; font: inherit; font-size: 13px;
+  transition: 0.2s;
+}
+.ghost:hover { border-color: var(--accent); }
+.ghost.danger { color: var(--danger); border-color: rgba(248,113,113,0.2); }
+.ghost.danger:hover { border-color: var(--danger); background: rgba(248,113,113,0.1); }
+.mt-8 { margin-top: 8px; }
+
+/* ================= MAIN CONTENT ================= */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 16px;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Topbar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+}
+.icon-btn {
+  background: none; border: none; color: var(--text);
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: 0.2s;
+}
+.icon-btn:hover { background: var(--glass-strong); }
+.icon-btn.square { border: 1px solid var(--stroke); border-radius: 8px; width: 34px; height: 34px; }
+
+.search-bar {
+  flex: 1;
+  margin: 0 16px;
+  color: var(--muted);
+  display: flex; align-items: center;
+}
+.topbar-right {
+  display: flex; align-items: center; gap: 12px;
+}
+.sun-icon { color: var(--muted); }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(135deg, #ef4444, #b91c1c); /* Warna avatar di gambar */
+  border: 2px solid var(--glass-strong);
+  position: relative;
+}
+.status-dot {
+  position: absolute; bottom: 0; right: 0;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #22c55e; border: 2px solid var(--bg);
+}
+
+/* ================= CARDS ================= */
+.card {
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+/* Gateway Card */
+.gateway-card {
+  display: flex; flex-direction: column; gap: 20px;
+}
+.gateway-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+}
+.gateway-title {
+  display: flex; gap: 12px; align-items: center;
+}
+.gateway-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: rgba(99, 102, 241, 0.15); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+}
+.gateway-title h2 {
+  font-size: 16px; font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.badge-live {
+  font-size: 10px; padding: 2px 8px; border-radius: 99px;
+  background: rgba(34, 197, 94, 0.15); color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.gateway-title p {
+  font-size: 12px; color: var(--muted); margin-top: 2px;
+}
+
+.gateway-stats {
+  display: flex; justify-content: space-between; gap: 12px;
+}
+.gw-stat-left, .gw-stat-right {
+  flex: 1; padding: 16px; border-radius: 12px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.gw-stat-left {
+  background: rgba(255,255,255,0.03);
+}
+.gw-stat-right.pending {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+.label {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
+  color: var(--muted); display: flex; align-items: center; gap: 4px;
+}
+.gw-stat-right.pending .label { color: #f59e0b; }
+.value { font-size: 18px; font-weight: 700; }
+
+.gateway-footer {
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 12px;
+}
+.gw-stat-settlement {
+  flex: 1; padding: 16px; border-radius: 12px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+.gw-stat-settlement .label { color: #22c55e; }
+.gw-actions {
+  display: flex; gap: 8px;
+}
+.btn-outline {
+  display: flex; align-items: center; gap: 6px;
+  background: transparent; border: 1px solid var(--stroke);
+  color: var(--text); padding: 0 12px; border-radius: 8px;
+  font-size: 12px; cursor: pointer;
+}
+
+/* Statistics Card */
+.stats-card {
+  display: flex; flex-direction: column; gap: 20px;
+}
+.stats-header {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.stats-header h2 { font-size: 16px; font-weight: 600; }
+.stats-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+}
+.stat-item {
+  display: flex; gap: 12px; align-items: center;
+}
+.stat-icon {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.icon-cyan { background: rgba(56, 189, 248, 0.15); color: #38bdf8; }
+.icon-red { background: rgba(248, 113, 113, 0.15); color: #f87171; }
+.icon-purple { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+.icon-green { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+
+.stat-data { display: flex; flex-direction: column; }
+.stat-data strong { font-size: 16px; font-weight: 700; color: var(--text); }
+.stat-data span { font-size: 12px; color: var(--muted); }
+
+.extra-info {
+  display: flex; justify-content: space-between; align-items: center;
+  border-top: 1px solid var(--stroke); padding-top: 16px;
+  font-size: 12px; color: var(--muted);
+}
+.badge {
+  font-size: 10px; font-weight: 600; color: var(--danger);
+  border: 1px solid var(--danger); padding: 2px 8px; border-radius: 99px;
+}
+.hidden{display:none!important}
+
+/* ================= FORMS & TABLES ================= */
+.panel {
+  background: var(--glass); border: 1px solid var(--stroke);
+  border-radius: var(--radius); padding: 20px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.panel h2 { font-size: 16px; font-weight: 600; }
+.page { display: none; flex-direction: column; gap: 16px; }
+.page.active { display: flex; }
+
+.inline-form{display:flex;gap:8px;flex-wrap:wrap}
+.inline-form input,.inline-form select{
+  background: rgba(0,0,0,0.2); border: 1px solid var(--stroke); color: var(--text);
+  padding: 12px 16px; border-radius: 10px; font: inherit; flex: 1; min-width: 130px;
+}
+[data-theme="light"] .inline-form input, [data-theme="light"] .inline-form select {
+  background: rgba(255,255,255,0.5);
+}
+.inline-form input:focus,.inline-form select:focus{
+  outline:none;border-color:var(--accent);
+}
+.primary{
+  background:var(--accent);color:#fff;border:none;
+  padding:12px 20px;border-radius:10px;font:inherit;font-weight:600;cursor:pointer;
+  box-shadow: 0 4px 12px var(--accent-glow);
+}
+.primary:hover{opacity:.9}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--stroke)}
+th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+.num{text-align:right}
+td .mini{
+  background:none;border:1px solid var(--stroke);color:var(--danger);
+  padding:4px 10px;border-radius:7px;font:inherit;font-size:12px;cursor:pointer;
+}
+
+/* Referral List */
+.referral-list{display:flex;flex-direction:column;gap:10px}
+.ref-admin{
+  background: rgba(0,0,0,0.1); border: 1px solid var(--stroke);
+  border-radius:12px;padding:16px;
+}
+.ref-admin header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+.ref-admin header strong{font-size:14px}
+.ref-admin header span{font-size:12px;color:var(--muted)}
+.ref-admin .members{display:flex;flex-direction:column;gap:6px}
+.member-row{
+  display:grid; grid-template-columns: 1.4fr auto auto auto auto;
+  gap:10px;align-items:center;font-size:13px;
+  padding:8px;border-radius:8px; background: rgba(255,255,255,0.02);
+}
+.member-name{font-weight:500}
+.member-type{
+  font-size:11px;font-weight:600;letter-spacing:.02em;
+  padding:2px 9px;border-radius:999px;
+  border:1px solid var(--stroke);white-space:nowrap;
+}
+.member-type.first{ color:#38bdf8; border-color:rgba(56,189,248,.45); background:rgba(56,189,248,.1); }
+.member-type.repeat{ color:#a855f7; border-color:rgba(168,85,247,.45); background:rgba(168,85,247,.1); }
+.member-salary{font-weight:600}
+
+/* Chart Grid */
+.chart-grid{display:grid;grid-template-columns:1fr;gap:16px}
+
+/* ================= RESPONSIVE (DESKTOP) ================= */
+@media (min-width: 900px) {
+  .app-container {
+    padding-left: 280px; /* Ruang untuk sidebar permanen */
+  }
+  
+  .sidebar {
+    transform: translateX(0); /* Sidebar selalu terbuka */
+    border-radius: 0;
+  }
+  
+  .drawer-overlay, #menuToggle, #closeSidebar {
+    display: none !important; /* Sembunyikan tombol mobile */
   }
 
-  const list = $('#referralList');
-  if (!list) return;
-  list.innerHTML = state.admins.length
-    ? state.admins.map(a => {
-        const members = state.members.filter(m => m.adminId === a.id);
-        const total = members.reduce((s, m) => s + m.deposit, 0);
-        const rows = members.map(m => `
-          <div class="member-row">
-            <span class="member-name">${m.name}</span>
-            <span class="member-type ${m.type}">
-              ${m.type === 'first' ? 'Deposit Pertama' : 'Redeposit'}
-            </span>
-            <span class="muted">${rp(m.deposit)}</span>
-            <span class="member-salary">${rp(salaryOf(m))}</span>
-            <button class="mini" data-del-member="${m.id}">Hapus</button>
-          </div>`).join('');
-        return `<div class="ref-admin">
-          <header>
-            <strong>${a.name}</strong>
-            <span>${members.length} member · ${rp(total)}
-              <button class="mini" data-del-admin="${a.id}">Hapus admin</button>
-            </span>
-          </header>
-          <div class="members">${rows || '<span class="muted">Belum ada member.</span>'}</div>
-        </div>`;
-      }).join('')
-    : '<p class="muted">Belum ada admin referral.</p>';
-}
-
-function drawCosts() {
-  const rows = state.costs.map(c => `<tr>
-    <td>${c.desc}</td>
-    <td class="num">${rp(c.amount)}</td>
-    <td><button class="mini" data-del-cost="${c.id}">Hapus</button></td>
-  </tr>`).join('');
-  const el = $('#costRows');
-  if (el) el.innerHTML = rows || '<tr><td colspan="3" class="muted">Belum ada biaya.</td></tr>';
-}
-
-function drawPayout() {
-  const count = $('#payoutCount');
-  if (count) count.value = state.payout;
-  setText('#payoutInfo',
-    state.payout > 0
-      ? `${state.payout}x pencairan · fee flat ${rp(FEE)}`
-      : 'Belum ada pencairan hari ini.');
-}
-
-function drawCharts() {
-  const m = state.lock || metrics();
-  const color = textColor();
-  const labels = state.admins.map(a => a.name);
-  const data = state.admins.map(a =>
-    state.members.filter(x => x.adminId === a.id)
-      .reduce((s, x) => s + x.deposit, 0));
-
-  const depositCanvas = $('#chartDeposit');
-  if (depositCanvas && typeof Chart !== 'undefined') {
-    charts.deposit?.destroy();
-    charts.deposit = new Chart(depositCanvas, {
-      type: 'bar',
-      data: { labels, datasets: [{
-        data, borderRadius: 8,
-        backgroundColor: 'rgba(56,189,248,.55)', borderColor: '#38bdf8', borderWidth: 1
-      }]},
-      options: {
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color }, grid: { color: 'transparent' } },
-          y: { ticks: { color }, grid: { color: 'rgba(148,163,184,.15)' } }
-        }
-      }
-    });
+  .content {
+    padding: 24px;
+    max-width: 1200px;
   }
 
-  const compositionCanvas = $('#chartComposition');
-  if (compositionCanvas && typeof Chart !== 'undefined') {
-    charts.composition?.destroy();
-    charts.composition = new Chart(compositionCanvas, {
-      type: 'doughnut',
-      data: {
-        labels: ['Gaji Admin', 'Biaya Ops', 'Fee', 'Bersih'],
-        datasets: [{
-          data: [m.salary, m.ops, m.fee, Math.max(m.net, 0)],
-          backgroundColor: ['#a855f7', '#f59e0b', '#f472b6', '#22c55e'],
-          borderWidth: 0
-        }]
-      },
-      options: { plugins: { legend: { labels: { color } } } }
-    });
+  .chart-grid { grid-template-columns: 1fr 1fr; }
+  .desktop-only { display: flex !important; }
+}
+
+@media (max-width: 899px) {
+  .desktop-only { display: none !important; }
+  
+  /* Penyesuaian form untuk layar kecil */
+  .inline-form input, .inline-form select { min-width: 100%; }
+  .inline-form .primary { width: 100%; }
+  
+  /* Grid referral jadi 1 kolom di HP */
+  .member-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "name type" "dep salary" "del del";
+    row-gap: 6px;
   }
+  .member-name { grid-area: name; }
+  .member-type { grid-area: type; justify-self: end; }
+  .member-row .muted { grid-area: dep; }
+  .member-salary { grid-area: salary; justify-self: end; }
+  .member-row .mini { grid-area: del; justify-self: end; }
 }
-
-function render() {
-  drawStats(); drawSalaryRows(); drawReferral();
-  drawCosts(); drawPayout(); drawCharts();
-}
-
-/* ===== Navigasi & Tema ===== */
-const PAGE_TITLE = {
-  dashboard: 'Dashboard', referral: 'Referral',
-  costs: 'Biaya Operasional', payout: 'Pencairan'
-};
-
-function setPage(name) {
-  document.querySelectorAll('#nav button').forEach(b =>
-    b.classList.toggle('active', b.dataset.view === name));
-  document.querySelectorAll('.page').forEach(p =>
-    p.classList.toggle('active', p.dataset.page === name));
-  setText('#pageTitle', PAGE_TITLE[name]);
-
-  // Tutup sidebar di HP setelah pilih menu
-  if (window.innerWidth <= 900) {
-    document.getElementById('sidebar')?.classList.add('closed');
-  }
-}
-
-$('#nav').addEventListener('click', e => {
-  const btn = e.target.closest('button[data-view]');
-  if (btn) setPage(btn.dataset.view);
-});
-
-/* Toggle Sidebar (tombol garis 3) */
-const menuToggle = document.getElementById('menuToggle');
-if (menuToggle) {
-  menuToggle.addEventListener('click', () => {
-    document.getElementById('sidebar')?.classList.toggle('closed');
-  });
-}
-
-/* Saat viewport melebar ke desktop, pastikan sidebar tidak "closed" */
-window.addEventListener('resize', () => {
-  if (window.innerWidth > 900) {
-    document.getElementById('sidebar')?.classList.remove('closed');
-  }
-});
-
-function applyTheme(t) {
-  document.documentElement.dataset.theme = t;
-  localStorage.setItem(STORE + '-theme', t);
-
-  const isDark = t === 'dark';
-  document.getElementById('themeDark')?.classList.toggle('active', isDark);
-  document.getElementById('themeLight')?.classList.toggle('active', !isDark);
-
-  render();
-}
-
-document.getElementById('themeLight')?.addEventListener('click', () => applyTheme('light'));
-document.getElementById('themeDark')?.addEventListener('click', () => applyTheme('dark'));
-
-/* ===== Guard saat terkunci ===== */
-function blocked() {
-  if (isLocked()) alert('Hari ini terkunci. Klik "Hari Baru" untuk reset.');
-  return isLocked();
-}
-
-/* ===== Forms ===== */
-$('#adminForm').addEventListener('submit', e => {
-  e.preventDefault();
-  if (blocked()) return;
-  const name = $('#adminName').value.trim();
-  if (!name) return;
-  state.admins.push({ id: id(), name });
-  $('#adminName').value = '';
-  save(); render();
-});
-
-$('#memberForm').addEventListener('submit', e => {
-  e.preventDefault();
-  if (blocked()) return;
-  const name = $('#memberName').value.trim();
-  const adminId = $('#memberAdmin').value;
-  const type = $('#memberType').value;
-  const deposit = Number($('#memberDeposit').value);
-  if (!name || !adminId || !(deposit > 0)) return;
-  state.members.push({ id: id(), name, adminId, type, deposit });
-  $('#memberName').value = '';
-  $('#memberDeposit').value = '';
-  save(); render();
-});
-
-$('#costForm').addEventListener('submit', e => {
-  e.preventDefault();
-  if (blocked()) return;
-  const desc = $('#costDesc').value.trim();
-  const amount = Number($('#costAmount').value);
-  if (!desc || !(amount > 0)) return;
-  state.costs.push({ id: id(), desc, amount });
-  $('#costDesc').value = '';
-  $('#costAmount').value = '';
-  save(); render();
-});
-
-$('#payoutForm').addEventListener('submit', e => {
-  e.preventDefault();
-  if (blocked()) return;
-  state.payout = Math.max(0, Number($('#payoutCount').value) || 0);
-  save(); render();
-});
-
-/* ===== Hapus Data (event delegation) ===== */
-document.addEventListener('click', e => {
-  const t = e.target;
-  if (blocked()) return;
-  if (t.dataset.delAdmin) {
-    state.admins = state.admins.filter(a => a.id !== t.dataset.delAdmin);
-    state.members = state.members.filter(m => m.adminId !== t.dataset.delAdmin);
-  } else if (t.dataset.delMember) {
-    state.members = state.members.filter(m => m.id !== t.dataset.delMember);
-  } else if (t.dataset.delCost) {
-    state.costs = state.costs.filter(c => c.id !== t.dataset.delCost);
-  } else return;
-  save(); render();
-});
-
-/* ===== Snapshot & Reset ===== */
-$('#lockBtn').addEventListener('click', () => {
-  if (isLocked() || !confirm('Kunci angka hari ini?')) return;
-  state.lock = metrics();
-  save(); render();
-  if (window.innerWidth <= 900) document.getElementById('sidebar')?.classList.add('closed');
-});
-
-$('#resetBtn').addEventListener('click', () => {
-  if (!confirm('Reset data harian? Admin referral tetap disimpan.')) return;
-  const admins = state.admins;
-  state = { ...blank(), admins };
-  save(); render();
-  if (window.innerWidth <= 900) document.getElementById('sidebar')?.classList.add('closed');
-});
-
-/* Auto-lock saat 00:00 */
-setInterval(() => {
-  const now = new Date();
-  if (now.getHours() === 0 && now.getMinutes() === 0 && !isLocked()) {
-    state.lock = metrics(); save(); render();
-  }
-}, 60_000);
-
-/* ===== Init ===== */
-applyTheme(localStorage.getItem(STORE + '-theme') || 'dark');
-setPage('dashboard');
-render();
