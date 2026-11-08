@@ -1,286 +1,327 @@
-:root {
-  --bg: #0b1120;
-  --bg2: #1e1b4b;
-  --glass: rgba(255,255,255,.06);
-  --glass-strong: rgba(255,255,255,.12);
-  --stroke: rgba(255,255,255,.14);
-  --text: #e2e8f0;
-  --muted: #94a3b8;
-  --accent: #38bdf8;
-  --danger: #f87171;
-  --radius: 16px;
-  --shadow: 0 10px 40px rgba(0,0,0,.35);
+'use strict';
+
+/* ===== Konstanta domain ===== */
+const FEE = 1800;
+const RATE = { first: 0.5, repeat: 0.4 };
+const STORE = 'game-revenue-v1';
+
+/* ===== State ===== */
+const blank = () => ({ admins: [], members: [], costs: [], payout: 0, lock: null });
+let state = load();
+
+function load() {
+  try {
+    const raw = localStorage.getItem(STORE);
+    return raw ? { ...blank(), ...JSON.parse(raw) } : blank();
+  } catch { return blank(); }
 }
-[data-theme="light"] {
-  --bg: #eef2ff;
-  --bg2: #f8fafc;
-  --glass: rgba(255,255,255,.55);
-  --glass-strong: rgba(255,255,255,.8);
-  --stroke: rgba(15,23,42,.08);
-  --text: #0f172a;
-  --muted: #475569;
-  --accent: #0284c7;
-  --danger: #dc2626;
-  --shadow: 0 10px 40px rgba(15,23,42,.12);
+const save = () => localStorage.setItem(STORE, JSON.stringify(state));
+const id = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+const rp = n => 'Rp' + (n || 0).toLocaleString('id-ID');
+const isLocked = () => state.lock !== null;
+
+/* ===== Rumus murni ===== */
+const salaryOf = m => Math.round(m.deposit * RATE[m.type]);
+
+function metrics() {
+  const gross = state.members.reduce((s, m) => s + m.deposit, 0);
+  const salary = state.members.reduce((s, m) => s + salaryOf(m), 0);
+  const ops = state.costs.reduce((s, c) => s + c.amount, 0);
+  const fee = state.payout > 0 ? FEE : 0;
+  return { gross, salary, ops, fee, net: gross - fee - ops - salary };
 }
 
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%}
-body{
-  font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  color:var(--text);
-  background:linear-gradient(135deg,var(--bg),var(--bg2));
-  min-height:100vh;
-  min-height:100dvh;
-}
-.aurora{
-  position:fixed;inset:0;z-index:0;pointer-events:none;
-  background:
-    radial-gradient(600px 400px at 10% 0%,rgba(56,189,248,.35),transparent 60%),
-    radial-gradient(500px 400px at 90% 20%,rgba(168,85,247,.35),transparent 60%),
-    radial-gradient(500px 400px at 50% 100%,rgba(244,114,182,.25),transparent 60%);
-  filter:blur(40px);
-}
+/* ===== Render helpers ===== */
+const $ = sel => document.querySelector(sel);
+const setText = (sel, v) => { const el = $(sel); if (el) el.textContent = v; };
 
-.glass{
-  background:var(--glass);
-  border:1px solid var(--stroke);
-  box-shadow:var(--shadow);
-  backdrop-filter:blur(20px) saturate(160%);
-  -webkit-backdrop-filter:blur(20px) saturate(160%);
-  border-radius:var(--radius);
+const charts = { deposit: null, composition: null };
+const textColor = () => getComputedStyle(document.body).color;
+
+function drawStats() {
+  const m = state.lock || metrics();
+  setText('#sGross', rp(m.gross));
+  setText('#sFee', rp(m.fee));
+  setText('#sOps', rp(m.ops));
+  setText('#sSalary', rp(m.salary));
+  setText('#sNet', rp(m.net));
+
+  // Ringkasan di header mobile
+  setText('#mobileNet', rp(m.net));
+
+  const badge = $('#lockBadge');
+  if (badge) badge.classList.toggle('hidden', !isLocked());
+  setText('#pageDate', new Date().toLocaleDateString('id-ID',
+    { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
 }
 
-/* ===== Tombol Hamburger =====
-   Fixed di kiri atas, di luar sidebar, SELALU terlihat */
-.menu-toggle {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--text);
-  border-radius: 10px;
-  background: var(--glass-strong);
-  border: 1px solid var(--stroke);
-  z-index: 1001;
-}
-.menu-toggle:hover { border-color: var(--accent); }
-
-/* ===== Layout ===== */
-.shell{
-  position:relative;z-index:1;
-  display:flex;gap:20px;padding:20px;min-height:100vh;
+function drawSalaryRows() {
+  const rows = state.members.map(m => {
+    const admin = state.admins.find(a => a.id === m.adminId);
+    return `<tr>
+      <td>${admin?.name ?? '—'}</td>
+      <td>${m.name}</td>
+      <td>${m.type === 'first' ? 'Deposit Pertama' : 'Redeposit'}</td>
+      <td class="num">${rp(m.deposit)}</td>
+      <td class="num">${rp(salaryOf(m))}</td>
+    </tr>`;
+  }).join('');
+  const el = $('#salaryRows');
+  if (el) el.innerHTML = rows || '<tr><td colspan="5" class="muted">Belum ada member.</td></tr>';
 }
 
-/* ===== Sidebar (desktop: tampil normal) ===== */
-.sidebar{
-  width:250px;padding:20px;display:flex;flex-direction:column;gap:24px;
-  height:calc(100vh - 40px);position:sticky;top:20px;
-  transition: transform .3s cubic-bezier(0.4,0,0.2,1), opacity .3s;
-}
+function drawReferral() {
+  const adminOptions = state.admins.map(a =>
+    `<option value="${a.id}">${a.name}</option>`).join('');
 
-.brand{display:flex;gap:10px;align-items:center; margin-top: 5px;}
-.brand-mark{font-size:24px;color:var(--accent); line-height: 1;}
-.brand strong{font-size: 15px;}
-.brand small{display:block;color:var(--muted);font-size:11px}
-
-.nav{display:flex;flex-direction:column;gap:4px}
-.nav button{
-  background:none;border:1px solid transparent;color:var(--text);
-  text-align:left;padding:10px 14px;border-radius:10px;cursor:pointer;font:inherit;font-size: 14px;
-}
-.nav button:hover{background:var(--glass)}
-.nav button.active{background:var(--glass-strong);border-color:var(--accent)}
-
-.sidebar-actions{display:flex;flex-direction:column;gap:6px;margin-top:auto}
-.ghost{
-  background:var(--glass);border:1px solid var(--stroke);color:var(--text);
-  padding:9px 12px;border-radius:9px;cursor:pointer;font:inherit;font-size: 13px;
-}
-.ghost:hover{border-color:var(--accent)}
-.ghost.danger{color:var(--danger)}
-.mt-8 { margin-top: 8px; }
-
-/* Tema Switch */
-.theme-switch {
-  display: flex; gap: 4px; background: var(--glass);
-  padding: 4px; border-radius: 10px; border: 1px solid var(--stroke);
-}
-.theme-switch .btn-theme {
-  flex: 1; border: none; background: transparent; padding: 6px; font-size: 12px;
-}
-.theme-switch .btn-theme.active {
-  background: var(--accent); color: #fff;
-}
-
-/* ===== Main Content ===== */
-.content{flex:1;display:flex;flex-direction:column;gap:16px;min-width:0}
-.topbar{padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
-.topbar h1{font-size:18px}
-.muted{color:var(--muted);font-size:12px}
-.badge{
-  font-size:11px;font-weight:600;color:var(--danger);
-  border:1px solid var(--danger);padding:4px 10px;border-radius:999px;
-}
-.hidden{display:none!important}
-
-.page{display:none;flex-direction:column;gap:16px}
-.page.active{display:flex}
-
-/* Dashboard Cards Desktop */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
-.stat{padding:18px;display:flex;flex-direction:column;gap:6px}
-.stat span{font-size:12px;color:var(--muted)}
-.stat strong{font-size:20px}
-.stat.accent{border-color:var(--accent)}
-.stat.accent strong{color:var(--accent)}
-.stat.full-width { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; }
-
-.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.panel{padding:20px;display:flex;flex-direction:column;gap:14px}
-.panel h2{font-size:15px}
-
-/* Forms & Tables */
-.inline-form{display:flex;gap:8px;flex-wrap:wrap}
-.inline-form input,.inline-form select{
-  background:var(--glass);border:1px solid var(--stroke);color:var(--text);
-  padding:9px 12px;border-radius:9px;font:inherit;flex:1;min-width:130px;
-}
-.inline-form input:focus,.inline-form select:focus{
-  outline:none;border-color:var(--accent);
-}
-.primary{
-  background:var(--accent);color:#fff;border:none;
-  padding:9px 16px;border-radius:9px;font:inherit;font-weight:600;cursor:pointer;
-}
-.primary:hover{opacity:.9}
-
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th,td{padding:9px 10px;text-align:left;border-bottom:1px solid var(--stroke)}
-th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
-.num{text-align:right}
-td .mini{
-  background:none;border:1px solid var(--stroke);color:var(--danger);
-  padding:3px 9px;border-radius:7px;font:inherit;font-size:12px;cursor:pointer;
-}
-
-/* Referral List */
-.referral-list{display:flex;flex-direction:column;gap:10px}
-.ref-admin{
-  background:var(--glass);border:1px solid var(--stroke);
-  border-radius:12px;padding:14px;
-}
-.ref-admin header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px;flex-wrap:wrap}
-.ref-admin header strong{font-size:14px}
-.ref-admin header span{font-size:12px;color:var(--muted)}
-.ref-admin .members{display:flex;flex-direction:column;gap:4px}
-.member-row{
-  display:grid;
-  grid-template-columns:1.4fr auto auto auto auto;
-  gap:10px;align-items:center;font-size:13px;
-  padding:6px 8px;border-radius:8px;
-}
-.member-row:hover{background:var(--glass)}
-.member-name{font-weight:500}
-.member-type{
-  font-size:11px;font-weight:600;letter-spacing:.02em;
-  padding:2px 9px;border-radius:999px;
-  border:1px solid var(--stroke);white-space:nowrap;
-}
-.member-type.first{ color:#38bdf8; border-color:rgba(56,189,248,.45); background:rgba(56,189,248,.1); }
-.member-type.repeat{ color:#a855f7; border-color:rgba(168,85,247,.45); background:rgba(168,85,247,.1); }
-.member-salary{font-weight:600}
-
-[data-theme="light"] .member-type.first{ color:#0369a1; border-color:rgba(3,105,161,.35); background:rgba(3,105,161,.08); }
-[data-theme="light"] .member-type.repeat{ color:#7e22ce; border-color:rgba(126,34,206,.35); background:rgba(126,34,206,.08); }
-
-/* =========================================
-   MOBILE (<= 900px)
-   ========================================= */
-.mobile-header { display: none; }
-
-@media (max-width: 900px) {
-  .shell { padding: 0; display: block; }
-  .topbar { display: none; }
-
-  /* Sidebar overlay; default tertutup di mobile */
-  .sidebar {
-    width: 260px; height: 100dvh; position: fixed;
-    top: 0; left: 0; padding-top: 20px;
-    border-radius: 0 20px 20px 0; border-left: none;
-    z-index: 999;
-    transform: translateX(-100%);
-    opacity: 0;
-    pointer-events: none;
-  }
-  .sidebar:not(.closed) {
-    transform: translateX(0);
-    opacity: 1;
-    pointer-events: auto;
+  const memberAdmin = $('#memberAdmin');
+  if (memberAdmin) {
+    memberAdmin.innerHTML =
+      `<option value="" disabled ${state.admins.length ? '' : 'selected'}>-- Pilih Admin --</option>` +
+      adminOptions;
   }
 
-  .content { padding: 16px; gap: 16px; margin-top: 56px; }
-
-  /* Mobile header greeting */
-  .mobile-header {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 16px 20px; margin-bottom: 8px;
-  }
-  .mobile-greeting { display: flex; flex-direction: column; }
-  .mobile-greeting span { font-size: 12px; color: var(--muted); }
-  .mobile-greeting strong { font-size: 20px; color: var(--accent); margin-top: 4px; }
-  .mobile-avatar {
-    width: 44px; height: 44px; border-radius: 50%;
-    background: var(--glass-strong); display: flex; align-items: center; justify-content: center;
-    border: 1px solid var(--stroke); color: var(--text);
-  }
-
-  /* Grid Statistik 2x2 */
-  .stat-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
-  .stat { padding: 16px 14px; flex-direction: column; align-items: flex-start; gap: 12px; }
-  .stat.full-width { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; }
-
-  .stat-icon {
-    width: 36px; height: 36px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .icon-gross { background: rgba(56,189,248,.15); color: #38bdf8; }
-  .icon-salary { background: rgba(168,85,247,.15); color: #a855f7; }
-  .icon-ops { background: rgba(244,114,182,.15); color: #f472b6; }
-  .icon-fee { background: rgba(245,158,11,.15); color: #f59e0b; }
-  .icon-net { background: rgba(34,197,94,.15); color: #22c55e; width: 48px; height: 48px; border-radius: 12px; }
-
-  .stat-info { display: flex; flex-direction: column; gap: 4px; }
-  .stat-info span { font-size: 11px; }
-  .stat-info strong { font-size: 16px; }
-
-  .chart-grid { grid-template-columns: 1fr; gap: 16px; }
-  .panel { padding: 16px; }
-
-  .inline-form input, .inline-form select { min-width: 100%; }
-  .inline-form .primary { width: 100%; margin-top: 4px; }
+  const list = $('#referralList');
+  if (!list) return;
+  list.innerHTML = state.admins.length
+    ? state.admins.map(a => {
+        const members = state.members.filter(m => m.adminId === a.id);
+        const total = members.reduce((s, m) => s + m.deposit, 0);
+        const rows = members.map(m => `
+          <div class="member-row">
+            <span class="member-name">${m.name}</span>
+            <span class="member-type ${m.type}">
+              ${m.type === 'first' ? 'Deposit Pertama' : 'Redeposit'}
+            </span>
+            <span class="muted">${rp(m.deposit)}</span>
+            <span class="member-salary">${rp(salaryOf(m))}</span>
+            <button class="mini" data-del-member="${m.id}">Hapus</button>
+          </div>`).join('');
+        return `<div class="ref-admin">
+          <header>
+            <strong>${a.name}</strong>
+            <span>${members.length} member · ${rp(total)}
+              <button class="mini" data-del-admin="${a.id}">Hapus admin</button>
+            </span>
+          </header>
+          <div class="members">${rows || '<span class="muted">Belum ada member.</span>'}</div>
+        </div>`;
+      }).join('')
+    : '<p class="muted">Belum ada admin referral.</p>';
 }
 
-@media (max-width: 400px) {
-  .stat-grid { grid-template-columns: 1fr; }
-  .stat.full-width { flex-direction: column; align-items: flex-start; }
+function drawCosts() {
+  const rows = state.costs.map(c => `<tr>
+    <td>${c.desc}</td>
+    <td class="num">${rp(c.amount)}</td>
+    <td><button class="mini" data-del-cost="${c.id}">Hapus</button></td>
+  </tr>`).join('');
+  const el = $('#costRows');
+  if (el) el.innerHTML = rows || '<tr><td colspan="3" class="muted">Belum ada biaya.</td></tr>';
 }
 
-@media (max-width: 600px) {
-  .member-row {
-    grid-template-columns: 1fr auto;
-    grid-template-areas: "name type" "dep salary" "del del";
-    row-gap: 6px;
-  }
-  .member-name { grid-area: name; }
-  .member-type { grid-area: type; justify-self: end; }
-  .member-row .muted { grid-area: dep; }
-  .member-salary { grid-area: salary; justify-self: end; }
-  .member-row .mini { grid-area: del; justify-self: end; }
+function drawPayout() {
+  const count = $('#payoutCount');
+  if (count) count.value = state.payout;
+  setText('#payoutInfo',
+    state.payout > 0
+      ? `${state.payout}x pencairan · fee flat ${rp(FEE)}`
+      : 'Belum ada pencairan hari ini.');
 }
+
+function drawCharts() {
+  const m = state.lock || metrics();
+  const color = textColor();
+  const labels = state.admins.map(a => a.name);
+  const data = state.admins.map(a =>
+    state.members.filter(x => x.adminId === a.id)
+      .reduce((s, x) => s + x.deposit, 0));
+
+  const depositCanvas = $('#chartDeposit');
+  if (depositCanvas && typeof Chart !== 'undefined') {
+    charts.deposit?.destroy();
+    charts.deposit = new Chart(depositCanvas, {
+      type: 'bar',
+      data: { labels, datasets: [{
+        data, borderRadius: 8,
+        backgroundColor: 'rgba(56,189,248,.55)', borderColor: '#38bdf8', borderWidth: 1
+      }]},
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color }, grid: { color: 'transparent' } },
+          y: { ticks: { color }, grid: { color: 'rgba(148,163,184,.15)' } }
+        }
+      }
+    });
+  }
+
+  const compositionCanvas = $('#chartComposition');
+  if (compositionCanvas && typeof Chart !== 'undefined') {
+    charts.composition?.destroy();
+    charts.composition = new Chart(compositionCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: ['Gaji Admin', 'Biaya Ops', 'Fee', 'Bersih'],
+        datasets: [{
+          data: [m.salary, m.ops, m.fee, Math.max(m.net, 0)],
+          backgroundColor: ['#a855f7', '#f59e0b', '#f472b6', '#22c55e'],
+          borderWidth: 0
+        }]
+      },
+      options: { plugins: { legend: { labels: { color } } } }
+    });
+  }
+}
+
+function render() {
+  drawStats(); drawSalaryRows(); drawReferral();
+  drawCosts(); drawPayout(); drawCharts();
+}
+
+/* ===== Navigasi & Tema ===== */
+const PAGE_TITLE = {
+  dashboard: 'Dashboard', referral: 'Referral',
+  costs: 'Biaya Operasional', payout: 'Pencairan'
+};
+
+function setPage(name) {
+  document.querySelectorAll('#nav button').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === name));
+  document.querySelectorAll('.page').forEach(p =>
+    p.classList.toggle('active', p.dataset.page === name));
+  setText('#pageTitle', PAGE_TITLE[name]);
+
+  // Tutup sidebar di HP setelah pilih menu
+  if (window.innerWidth <= 900) {
+    document.getElementById('sidebar')?.classList.add('closed');
+  }
+}
+
+$('#nav').addEventListener('click', e => {
+  const btn = e.target.closest('button[data-view]');
+  if (btn) setPage(btn.dataset.view);
+});
+
+/* Toggle Sidebar (tombol garis 3) */
+const menuToggle = document.getElementById('menuToggle');
+if (menuToggle) {
+  menuToggle.addEventListener('click', () => {
+    document.getElementById('sidebar')?.classList.toggle('closed');
+  });
+}
+
+/* Saat viewport melebar ke desktop, pastikan sidebar tidak "closed" */
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 900) {
+    document.getElementById('sidebar')?.classList.remove('closed');
+  }
+});
+
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem(STORE + '-theme', t);
+
+  const isDark = t === 'dark';
+  document.getElementById('themeDark')?.classList.toggle('active', isDark);
+  document.getElementById('themeLight')?.classList.toggle('active', !isDark);
+
+  render();
+}
+
+document.getElementById('themeLight')?.addEventListener('click', () => applyTheme('light'));
+document.getElementById('themeDark')?.addEventListener('click', () => applyTheme('dark'));
+
+/* ===== Guard saat terkunci ===== */
+function blocked() {
+  if (isLocked()) alert('Hari ini terkunci. Klik "Hari Baru" untuk reset.');
+  return isLocked();
+}
+
+/* ===== Forms ===== */
+$('#adminForm').addEventListener('submit', e => {
+  e.preventDefault();
+  if (blocked()) return;
+  const name = $('#adminName').value.trim();
+  if (!name) return;
+  state.admins.push({ id: id(), name });
+  $('#adminName').value = '';
+  save(); render();
+});
+
+$('#memberForm').addEventListener('submit', e => {
+  e.preventDefault();
+  if (blocked()) return;
+  const name = $('#memberName').value.trim();
+  const adminId = $('#memberAdmin').value;
+  const type = $('#memberType').value;
+  const deposit = Number($('#memberDeposit').value);
+  if (!name || !adminId || !(deposit > 0)) return;
+  state.members.push({ id: id(), name, adminId, type, deposit });
+  $('#memberName').value = '';
+  $('#memberDeposit').value = '';
+  save(); render();
+});
+
+$('#costForm').addEventListener('submit', e => {
+  e.preventDefault();
+  if (blocked()) return;
+  const desc = $('#costDesc').value.trim();
+  const amount = Number($('#costAmount').value);
+  if (!desc || !(amount > 0)) return;
+  state.costs.push({ id: id(), desc, amount });
+  $('#costDesc').value = '';
+  $('#costAmount').value = '';
+  save(); render();
+});
+
+$('#payoutForm').addEventListener('submit', e => {
+  e.preventDefault();
+  if (blocked()) return;
+  state.payout = Math.max(0, Number($('#payoutCount').value) || 0);
+  save(); render();
+});
+
+/* ===== Hapus Data (event delegation) ===== */
+document.addEventListener('click', e => {
+  const t = e.target;
+  if (blocked()) return;
+  if (t.dataset.delAdmin) {
+    state.admins = state.admins.filter(a => a.id !== t.dataset.delAdmin);
+    state.members = state.members.filter(m => m.adminId !== t.dataset.delAdmin);
+  } else if (t.dataset.delMember) {
+    state.members = state.members.filter(m => m.id !== t.dataset.delMember);
+  } else if (t.dataset.delCost) {
+    state.costs = state.costs.filter(c => c.id !== t.dataset.delCost);
+  } else return;
+  save(); render();
+});
+
+/* ===== Snapshot & Reset ===== */
+$('#lockBtn').addEventListener('click', () => {
+  if (isLocked() || !confirm('Kunci angka hari ini?')) return;
+  state.lock = metrics();
+  save(); render();
+  if (window.innerWidth <= 900) document.getElementById('sidebar')?.classList.add('closed');
+});
+
+$('#resetBtn').addEventListener('click', () => {
+  if (!confirm('Reset data harian? Admin referral tetap disimpan.')) return;
+  const admins = state.admins;
+  state = { ...blank(), admins };
+  save(); render();
+  if (window.innerWidth <= 900) document.getElementById('sidebar')?.classList.add('closed');
+});
+
+/* Auto-lock saat 00:00 */
+setInterval(() => {
+  const now = new Date();
+  if (now.getHours() === 0 && now.getMinutes() === 0 && !isLocked()) {
+    state.lock = metrics(); save(); render();
+  }
+}, 60_000);
+
+/* ===== Init ===== */
+applyTheme(localStorage.getItem(STORE + '-theme') || 'dark');
+setPage('dashboard');
+render();
