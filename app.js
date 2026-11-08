@@ -13,7 +13,6 @@ function load() {
   try {
     const raw = localStorage.getItem(STORE);
     const parsed = raw ? JSON.parse(raw) : blank();
-    // Migrasi: pastikan semua member lama punya properti isPaid
     if (parsed.members) {
       parsed.members = parsed.members.map(m => ({ ...m, isPaid: m.isPaid || false }));
     }
@@ -30,7 +29,6 @@ const salaryOf = m => Math.round(m.deposit * RATE[m.type]);
 
 function metrics() {
   const gross = state.members.reduce((s, m) => s + m.deposit, 0);
-  // Hanya hitung gaji yang BELUM dibayar (isPaid === false)
   const unpaidSalary = state.members.filter(m => !m.isPaid).reduce((s, m) => s + salaryOf(m), 0);
   const ops = state.costs.reduce((s, c) => s + c.amount, 0);
   const fee = state.payout > 0 ? FEE : 0;
@@ -61,7 +59,6 @@ function drawStats() {
 }
 
 function drawSalaryRows() {
-  // Di dashboard, tampilkan semua gaji beserta statusnya
   const rows = state.members.map(m => {
     const admin = state.admins.find(a => a.id === m.adminId);
     const status = m.isPaid ? '<span style="color:#10b981">Lunas</span>' : '<span style="color:#f59e0b">Pending</span>';
@@ -97,8 +94,6 @@ function drawReferral() {
     ? state.admins.map(a => {
         const members = state.members.filter(m => m.adminId === a.id);
         const total = members.reduce((s, m) => s + m.deposit, 0);
-        
-        // Hitung sisa gaji yang belum dibayar untuk admin ini
         const unpaid = members.filter(m => !m.isPaid).reduce((s, m) => s + salaryOf(m), 0);
 
         const rows = members.map(m => {
@@ -211,7 +206,7 @@ function render() {
   drawCosts(); drawPayout(); drawCharts();
 }
 
-/* ===== Navigasi & Sidebar Toggle ===== */
+/* ================= NAVIGASI & SIDEBAR (FIXED) ================= */
 const PAGE_TITLE = {
   dashboard: 'Dashboard', referral: 'Referral & Member',
   costs: 'Biaya Operasional', payout: 'Pencairan'
@@ -237,23 +232,31 @@ if (closeSidebar) closeSidebar.addEventListener('click', () => toggleSidebar(fal
 if (drawerOverlay) drawerOverlay.addEventListener('click', () => toggleSidebar(false));
 
 function setPage(name) {
+  // 1. Ubah class active pada tombol menu
   document.querySelectorAll('#nav button').forEach(b =>
     b.classList.toggle('active', b.dataset.view === name));
+  
+  // 2. Sembunyikan semua halaman, lalu tampilkan yang dipilih
   document.querySelectorAll('.page').forEach(p =>
     p.classList.toggle('active', p.dataset.page === name));
   
+  // 3. Ubah judul halaman
   setText('#pageTitle', PAGE_TITLE[name] || 'Dashboard');
 
+  // 4. Tutup sidebar otomatis jika di mobile (HP)
   if (window.innerWidth <= 900) {
     toggleSidebar(false);
   }
 }
 
+// PERBAIKAN: Event listener untuk navigasi menu
 $('#nav').addEventListener('click', e => {
+  // Cari tombol terdekat dengan atribut data-view (mengabaikan jika yang diklik adalah SVG di dalamnya)
   const btn = e.target.closest('button[data-view]');
   if (btn) {
     setPage(btn.dataset.view);
   } else {
+    // Jika user mengklik area menu lain yang bukan navigasi (misal garis pembatas), tutup sidebar
     if (window.innerWidth <= 900) toggleSidebar(false);
   }
 });
@@ -298,7 +301,6 @@ $('#memberForm').addEventListener('submit', e => {
   const type = $('#memberType').value;
   const deposit = Number($('#memberDeposit').value);
   if (!name || !adminId || !(deposit > 0)) return;
-  // Tambahkan isPaid: false saat membuat member baru
   state.members.push({ id: id(), name, adminId, type, deposit, isPaid: false });
   $('#memberName').value = '';
   $('#memberDeposit').value = '';
@@ -328,7 +330,6 @@ $('#payoutForm').addEventListener('submit', e => {
 document.addEventListener('click', e => {
   const t = e.target;
   
-  // Handle Toggle Paid (Ceklis Gaji)
   const toggleBtn = t.closest('[data-toggle-paid]');
   if (toggleBtn) {
     if (blocked()) return;
@@ -341,7 +342,6 @@ document.addEventListener('click', e => {
     return;
   }
 
-  // Handle Delete
   if (blocked()) return;
   if (t.dataset.delAdmin) {
     state.admins = state.admins.filter(a => a.id !== t.dataset.delAdmin);
