@@ -11,7 +11,7 @@
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
   
   /* Warna Aksen */
-  --accent: #8b5cf6; /* Ungu Elegan */
+  --accent: #8b5cf6;
   --accent-glow: rgba(139, 92, 246, 0.5);
   --danger: #f43f5e;
   
@@ -59,7 +59,7 @@ body{
     radial-gradient(circle at 90% 20%, rgba(56, 189, 248, 0.1) 0%, transparent 50%);
 }
 
-/* ================= GLASSMORPHISM CORE ================= */
+/* ================= GLASSMORPHISM CORE (Hanya untuk Kartu/Panel) ================= */
 .glass-panel {
   background: var(--glass-bg);
   backdrop-filter: blur(20px);
@@ -91,7 +91,12 @@ body{
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  
+  /* PERUBAHAN: Sidebar dibuat solid di mobile agar tidak buram */
+  background: #0f172a; 
+  border-right: 1px solid var(--glass-border);
 }
+
 .sidebar.open {
   transform: translateX(0);
 }
@@ -398,7 +403,10 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   .sidebar {
     transform: translateX(0);
     border-radius: 0;
-    border-right: 1px solid var(--glass-border);
+    /* Di desktop, kita biarkan elegan dengan efek kaca */
+    background: var(--glass-bg); 
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
   
   .drawer-overlay, #menuToggle, #closeSidebar {
