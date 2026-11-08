@@ -1,5 +1,5 @@
 :root {
-  /* Tema Gelap Modern (Elegan) */
+  /* Tema Gelap Modern (Mobile - Solid) */
   --bg: #0f172a;
   --bg2: #1e1b4b;
   --text: #f8fafc;
@@ -19,6 +19,7 @@
 }
 
 [data-theme="light"] {
+  /* Tema Terang (Mobile - Solid) */
   --bg: #f0f4f8;
   --bg2: #e2e8f0;
   --text: #0f172a;
@@ -350,8 +351,8 @@ body{
 }
 .primary:hover{ transform: translateY(-2px); box-shadow: 0 6px 20px var(--accent-glow); }
 
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px; min-width: 600px;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
 th,td{padding:14px 10px;text-align:left;border-bottom:1px solid var(--card-border)}
 th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1px}
 .num{text-align:right}
@@ -434,11 +435,13 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
 
 /* ================= RESPONSIVE (MOBILE) ================= */
 @media (max-width: 899px) {
+  /* Form jadi bersusun ke bawah */
   .inline-form input, .inline-form select, .inline-form .primary { 
     width: 100%; 
     min-width: 100%; 
   }
   
+  /* Kartu statistik jadi 1 kolom penuh (list style) */
   .stats-grid {
     grid-template-columns: 1fr; 
     gap: 16px;
@@ -451,16 +454,20 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     border: 1px solid var(--card-border);
   }
 
-  /* Form dan tabel di mobile */
+  /* Wrapper tabel agar bisa di-scroll horizontal di HP */
   .table-wrap {
     margin: 0 -16px;
     padding: 0 16px;
     width: calc(100% + 32px);
   }
   
+  table {
+    min-width: 600px; /* Memaksa tabel lebar agar rapi & bisa di-swipe */
+  }
+
   .panel { padding: 16px; }
 
-  /* Grid Referral Mobile - Perbaikan Error Berdesakan */
+  /* Grid Referral Mobile agar tidak berdesakan */
   .member-row {
     grid-template-columns: 1fr auto;
     grid-template-areas: 
@@ -472,14 +479,14 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   }
   .member-name { 
     grid-area: name; 
-    align-items: flex-start; /* Agar ceklis dan nama sejajar atas jika nama panjang */
+    align-items: flex-start;
   }
   .member-type { grid-area: type; justify-self: end; align-self: start;}
   .member-row .muted { grid-area: dep; font-size: 12px; }
   .member-salary { grid-area: salary; justify-self: end; }
   .member-row .mini { 
     grid-area: del; 
-    justify-self: stretch; /* Tombol hapus jadi lebar penuh di bawah */
+    justify-self: stretch; 
     margin-top: 8px; 
     text-align: center;
     padding: 8px;
@@ -487,6 +494,7 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
 }
 
 /* ================= RESPONSIVE (DESKTOP) - EFFECT GLASS ================= */
+/* Efek kaca HANYA diterapkan pada layar di atas 900px (Desktop/Laptop) */
 @media (min-width: 900px) {
   :root {
     --glass-bg: rgba(30, 41, 59, 0.4);
@@ -500,6 +508,7 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08);
   }
 
+  /* Efek Glass diaktifkan di Desktop */
   .glass-panel {
     background: var(--glass-bg) !important;
     backdrop-filter: blur(20px) !important;
@@ -517,6 +526,7 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     border-right: 1px solid var(--glass-border) !important;
   }
   
+  /* Layout Desktop */
   .app-container {
     padding-left: 280px;
   }
