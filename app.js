@@ -19,10 +19,22 @@ function load() {
     return { ...blank(), ...parsed };
   } catch { return blank(); }
 }
-const save = () => localStorage.setItem(STORE, JSON.stringify(state));
+
+const save = () => {
+  try { localStorage.setItem(STORE, JSON.stringify(state)); }
+  catch (err) { console.error('Gagal menyimpan state:', err); }
+};
+
 const id = () => crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
 const rp = n => 'Rp ' + (n || 0).toLocaleString('id-ID');
 const isLocked = () => state.lock !== null;
+
+/* ===== Helper escape HTML (mencegah XSS) ===== */
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, ch => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[ch]));
+}
 
 /* ===== Rumus murni ===== */
 const salaryOf = m => Math.round(m.deposit * RATE[m.type]);
@@ -35,7 +47,7 @@ function metrics() {
   return { gross, salary: unpaidSalary, ops, fee, net: gross - fee - ops - unpaidSalary };
 }
 
-/* ===== Render ===== */
+/* ===== Render helper ===== */
 const $ = sel => document.querySelector(sel);
 const setText = (sel, v) => { const el = $(sel); if (el) el.textContent = v; };
 
@@ -63,8 +75,8 @@ function drawSalaryRows() {
     const admin = state.admins.find(a => a.id === m.adminId);
     const status = m.isPaid ? '<span style="color:#10b981">Lunas</span>' : '<span style="color:#f59e0b">Pending</span>';
     return `<tr style="${m.isPaid ? 'opacity: 0.5' : ''}">
-      <td>${admin?.name ?? '—'}</td>
-      <td>${m.name}</td>
+      <td>${escapeHtml(admin?.name ?? '—')}</td>
+      <td>${escapeHtml(m.name)}</td>
       <td>${m.type === 'first' ? 'Deposit Pertama' : 'Redeposit'}</td>
       <td class="num">${rp(m.deposit)}</td>
       <td class="num">${rp(salaryOf(m))}</td>
@@ -77,14 +89,26 @@ function drawSalaryRows() {
 }
 
 function drawReferral() {
-  const adminOptions = state.admins.map(a =>
-    `<option value="${a.id}">${a.name}</option>`).join('');
-
+  /* Sinkronisasi select admin tanpa menghapus pilihan user */
   const memberAdmin = $('#memberAdmin');
   if (memberAdmin) {
-    memberAdmin.innerHTML =
-      `<option value="" disabled ${state.admins.length ? '' : 'selected'}>-- Pilih Admin --</option>` +
-      adminOptions;
+    const currentValue = memberAdmin.value;
+    const admins = state.admins;
+
+    const expectedOptions = admins.map(a => a.id).join('|');
+    const currentOptions = Array.from(memberAdmin.options)
+      .filter(o => o.value && o.value !== '')
+      .map(o => o.value).join('|');
+
+    if (expectedOptions !== currentOptions) {
+      memberAdmin.innerHTML =
+        `<option value="" disabled ${admins.length ? '' : 'selected'}>-- Pilih Admin --</option>` +
+        admins.map(a => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+      
+      if (currentValue && admins.some(a => a.id === currentValue)) {
+        memberAdmin.value = currentValue;
+      }
+    }
   }
 
   const list = $('#referralList');
@@ -103,7 +127,7 @@ function drawReferral() {
               <button type="button" class="check-btn ${isPaid ? 'active' : ''}" data-toggle-paid="${m.id}" title="${isPaid ? 'Batal Lunas' : 'Tandai Lunas'}">
                 ${isPaid ? '✓' : ''}
               </button>
-              ${m.name}
+              ${escapeHtml(m.name)}
             </span>
             <span class="member-type ${m.type}">
               ${m.type === 'first' ? 'Deposit Pertama' : 'Redeposit'}
@@ -117,7 +141,7 @@ function drawReferral() {
         return `<div class="ref-admin">
           <header>
             <div>
-              <strong>${a.name}</strong>
+              <strong>${escapeHtml(a.name)}</strong>
               <div style="font-size:12px; color:var(--muted); margin-top:4px;">
                 ${members.length} member · Total Deposit: ${rp(total)}
               </div>
@@ -137,7 +161,7 @@ function drawReferral() {
 
 function drawCosts() {
   const rows = state.costs.map(c => `<tr>
-    <td>${c.desc}</td>
+    <td>${escapeHtml(c.desc)}</td>
     <td class="num">${rp(c.amount)}</td>
     <td><button type="button" class="mini" data-del-cost="${c.id}">Hapus</button></td>
   </tr>`).join('');
@@ -147,8 +171,11 @@ function drawCosts() {
 }
 
 function drawPayout() {
+  /* Jangan override input saat user sedang mengetik */
   const count = $('#payoutCount');
-  if (count) count.value = state.payout;
+  if (count && document.activeElement !== count) {
+    count.value = state.payout;
+  }
   
   setText('#payoutInfo',
     state.payout > 0
@@ -174,6 +201,8 @@ function drawCharts() {
         backgroundColor: 'rgba(99, 102, 241, .6)', borderColor: '#6366f1', borderWidth: 1
       }]},
       options: {
+        responsive: true,
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
           x: { ticks: { color }, grid: { color: 'transparent' } },
@@ -196,7 +225,11 @@ function drawCharts() {
           borderWidth: 0
         }]
       },
-      options: { plugins: { legend: { labels: { color } } } }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color } } }
+      }
     });
   }
 }
@@ -206,7 +239,7 @@ function render() {
   drawCosts(); drawPayout(); drawCharts();
 }
 
-/* ================= NAVIGASI & SIDEBAR (FIXED) ================= */
+/* ================= NAVIGASI & SIDEBAR ================= */
 const PAGE_TITLE = {
   dashboard: 'Dashboard', referral: 'Referral & Member',
   costs: 'Biaya Operasional', payout: 'Pencairan'
@@ -218,18 +251,30 @@ const drawerOverlay = document.getElementById('drawerOverlay');
 const sidebar = document.getElementById('sidebar');
 
 function toggleSidebar(open) {
+  if (!sidebar) return;
   if (open) {
-    sidebar?.classList.add('open');
+    sidebar.classList.add('open');
     drawerOverlay?.classList.add('active');
   } else {
-    sidebar?.classList.remove('open');
+    sidebar.classList.remove('open');
     drawerOverlay?.classList.remove('active');
   }
 }
 
-if (menuToggle) menuToggle.addEventListener('click', () => toggleSidebar(true));
-if (closeSidebar) closeSidebar.addEventListener('click', () => toggleSidebar(false));
+if (menuToggle) menuToggle.addEventListener('click', e => {
+  e.preventDefault();
+  toggleSidebar(true);
+});
+if (closeSidebar) closeSidebar.addEventListener('click', e => {
+  e.preventDefault();
+  toggleSidebar(false);
+});
 if (drawerOverlay) drawerOverlay.addEventListener('click', () => toggleSidebar(false));
+
+/* Tutup sidebar dengan tombol Escape */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') toggleSidebar(false);
+});
 
 function setPage(name) {
   document.querySelectorAll('#nav button[data-view]').forEach(b =>
@@ -240,30 +285,77 @@ function setPage(name) {
   
   setText('#pageTitle', PAGE_TITLE[name] || 'Dashboard');
 
+  /* Tutup sidebar di mobile setelah render */
   if (window.innerWidth <= 900) {
-    toggleSidebar(false);
+    requestAnimationFrame(() => toggleSidebar(false));
+  }
+
+  /* Chart harus di-render ulang saat halaman dashboard kembali aktif
+     karena ukuran canvas berubah dari display:none */
+  if (name === 'dashboard') {
+    requestAnimationFrame(() => drawCharts());
   }
 }
 
-// Event delegation global untuk navigasi
+/* ================= EVENT DELEGATION GLOBAL (TERPADU) ================= */
+/*
+ * Semua klik ditangani di SATU listener dengan prioritas berurutan.
+ * Navigasi diproses PERTAMA dengan stopPropagation agar tidak bentrok
+ * dengan handler hapus/toggle-paid.
+ */
 document.addEventListener('click', e => {
-  const btn = e.target.closest('button[data-view]');
-  if (btn) {
-    e.preventDefault(); 
-    setPage(btn.dataset.view);
+  /* --- PRIORITAS 1: Navigasi sidebar --- */
+  const navBtn = e.target.closest('button[data-view]');
+  if (navBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    setPage(navBtn.dataset.view);
+    return;
   }
+
+  /* --- PRIORITAS 2: Toggle paid --- */
+  const toggleBtn = e.target.closest('[data-toggle-paid]');
+  if (toggleBtn) {
+    e.preventDefault();
+    if (blocked()) return;
+    const member = state.members.find(m => m.id === toggleBtn.dataset.togglePaid);
+    if (member) {
+      member.isPaid = !member.isPaid;
+      save(); render();
+    }
+    return;
+  }
+
+  /* --- PRIORITAS 3: Aksi hapus --- */
+  const t = e.target.closest('[data-del-admin], [data-del-member], [data-del-cost]');
+  if (!t) return;
+
+  if (blocked()) return;
+
+  if (t.dataset.delAdmin) {
+    state.admins = state.admins.filter(a => a.id !== t.dataset.delAdmin);
+    state.members = state.members.filter(m => m.adminId !== t.dataset.delAdmin);
+  } else if (t.dataset.delMember) {
+    state.members = state.members.filter(m => m.id !== t.dataset.delMember);
+  } else if (t.dataset.delCost) {
+    state.costs = state.costs.filter(c => c.id !== t.dataset.delCost);
+  } else {
+    return;
+  }
+  save(); render();
 });
 
-/* Tema */
+/* ================= Tema ================= */
 function applyTheme(t) {
   document.documentElement.dataset.theme = t;
-  localStorage.setItem(STORE + '-theme', t);
+  try { localStorage.setItem(STORE + '-theme', t); } catch {}
 
   const isDark = t === 'dark';
   document.getElementById('themeDark')?.classList.toggle('active', isDark);
   document.getElementById('themeLight')?.classList.toggle('active', !isDark);
 
-  render();
+  /* Delay render chart agar browser sempat apply warna baru */
+  requestAnimationFrame(() => render());
 }
 
 document.getElementById('themeLight')?.addEventListener('click', () => applyTheme('light'));
@@ -271,12 +363,15 @@ document.getElementById('themeDark')?.addEventListener('click', () => applyTheme
 
 /* ===== Guard saat terkunci ===== */
 function blocked() {
-  if (isLocked()) alert('Hari ini terkunci. Klik "Hari Baru" untuk reset.');
-  return isLocked();
+  if (isLocked()) {
+    alert('Hari ini terkunci. Klik "Hari Baru" untuk reset.');
+    return true;
+  }
+  return false;
 }
 
 /* ===== Forms ===== */
-$('#adminForm').addEventListener('submit', e => {
+$('#adminForm')?.addEventListener('submit', e => {
   e.preventDefault();
   if (blocked()) return;
   const name = $('#adminName').value.trim();
@@ -286,7 +381,7 @@ $('#adminForm').addEventListener('submit', e => {
   save(); render();
 });
 
-$('#memberForm').addEventListener('submit', e => {
+$('#memberForm')?.addEventListener('submit', e => {
   e.preventDefault();
   if (blocked()) return;
   const name = $('#memberName').value.trim();
@@ -300,7 +395,7 @@ $('#memberForm').addEventListener('submit', e => {
   save(); render();
 });
 
-$('#costForm').addEventListener('submit', e => {
+$('#costForm')?.addEventListener('submit', e => {
   e.preventDefault();
   if (blocked()) return;
   const desc = $('#costDesc').value.trim();
@@ -312,50 +407,22 @@ $('#costForm').addEventListener('submit', e => {
   save(); render();
 });
 
-$('#payoutForm').addEventListener('submit', e => {
+$('#payoutForm')?.addEventListener('submit', e => {
   e.preventDefault();
   if (blocked()) return;
   state.payout = Math.max(0, Number($('#payoutCount').value) || 0);
   save(); render();
 });
 
-/* ===== Aksi Klik (Hapus & Toggle Paid) ===== */
-document.addEventListener('click', e => {
-  const t = e.target;
-  
-  const toggleBtn = t.closest('[data-toggle-paid]');
-  if (toggleBtn) {
-    if (blocked()) return;
-    const memberId = toggleBtn.dataset.togglePaid;
-    const member = state.members.find(m => m.id === memberId);
-    if (member) {
-      member.isPaid = !member.isPaid;
-      save(); render();
-    }
-    return;
-  }
-
-  if (blocked()) return;
-  if (t.dataset.delAdmin) {
-    state.admins = state.admins.filter(a => a.id !== t.dataset.delAdmin);
-    state.members = state.members.filter(m => m.adminId !== t.dataset.delAdmin);
-  } else if (t.dataset.delMember) {
-    state.members = state.members.filter(m => m.id !== t.dataset.delMember);
-  } else if (t.dataset.delCost) {
-    state.costs = state.costs.filter(c => c.id !== t.dataset.delCost);
-  } else return;
-  save(); render();
-});
-
 /* ===== Snapshot & Reset ===== */
-$('#lockBtn').addEventListener('click', () => {
+$('#lockBtn')?.addEventListener('click', () => {
   if (isLocked() || !confirm('Kunci angka hari ini?')) return;
   state.lock = metrics();
   save(); render();
   if (window.innerWidth <= 900) toggleSidebar(false);
 });
 
-$('#resetBtn').addEventListener('click', () => {
+$('#resetBtn')?.addEventListener('click', () => {
   if (!confirm('Reset data harian? Admin referral tetap disimpan.')) return;
   const admins = state.admins;
   state = { ...blank(), admins };
