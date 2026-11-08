@@ -27,7 +27,7 @@ function metrics() {
   const gross = state.members.reduce((s, m) => s + m.deposit, 0);
   const salary = state.members.reduce((s, m) => s + salaryOf(m), 0);
   const ops = state.costs.reduce((s, c) => s + c.amount, 0);
-  const fee = state.payout > 0 ? FEE : 0;   // flat Rp1.800 bila ada pencairan
+  const fee = state.payout > 0 ? FEE : 0;
   return { gross, salary, ops, fee, net: gross - fee - ops - salary };
 }
 
@@ -68,8 +68,9 @@ function drawSalaryRows() {
 function drawReferral() {
   const adminOptions = state.admins.map(a =>
     `<option value="${a.id}">${a.name}</option>`).join('');
-  $('#memberAdmin').innerHTML = adminOptions ||
-    '<option value="">(tambah admin dulu)</option>';
+  
+  $('#memberAdmin').innerHTML = 
+    `<option value="" disabled ${state.admins.length ? '' : 'selected'}>-- Pilih Admin --</option>` + adminOptions;
 
   $('#referralList').innerHTML = state.admins.length
     ? state.admins.map(a => {
@@ -182,10 +183,16 @@ $('#nav').addEventListener('click', e => {
 function applyTheme(t) {
   document.documentElement.dataset.theme = t;
   localStorage.setItem(STORE + '-theme', t);
+  
+  const isDark = t === 'dark';
+  $('#themeDark')?.classList.toggle('active', isDark);
+  $('#themeLight')?.classList.toggle('active', !isDark);
+  
   render();
 }
-$('#themeToggle').addEventListener('click', () =>
-  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+
+$('#themeLight').addEventListener('click', () => applyTheme('light'));
+$('#themeDark').addEventListener('click', () => applyTheme('dark'));
 
 /* ===== Guard saat terkunci ===== */
 function blocked() {
@@ -259,7 +266,6 @@ $('#lockBtn').addEventListener('click', () => {
   save(); render();
 });
 
-/* Hari Baru: admin referral dipertahankan, data harian direset */
 $('#resetBtn').addEventListener('click', () => {
   if (!confirm('Reset data harian? Admin referral tetap disimpan.')) return;
   const admins = state.admins;
