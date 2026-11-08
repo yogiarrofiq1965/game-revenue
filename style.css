@@ -66,7 +66,6 @@ body{
   border: 1px solid var(--card-border);
   box-shadow: var(--card-shadow);
   border-radius: var(--radius);
-  /* Tanpa backdrop-filter di mobile */
 }
 
 /* ================= LAYOUT ================= */
@@ -92,7 +91,6 @@ body{
   flex-direction: column;
   overflow-y: auto;
   
-  /* Solid background untuk mobile */
   background: var(--bg);
   border-right: 1px solid var(--card-border);
 }
@@ -101,7 +99,7 @@ body{
   transform: translateX(0);
 }
 
-/* PERBAIKAN: Overlay dibuat lebih transparan (0.3) */
+/* Overlay tanpa blur & tidak terlalu gelap */
 .drawer-overlay {
   position: fixed; inset: 0;
   background: rgba(0, 0, 0, 0.3); 
@@ -380,7 +378,7 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   border: 1px solid transparent; transition: 0.3s;
 }
 .member-row:hover { border-color: var(--card-border); background: rgba(255,255,255,0.04); }
-.member-name{font-weight:600}
+.member-name{font-weight:600; display: flex; align-items: center;}
 .member-type{
   font-size:10px;font-weight:700;letter-spacing:.5px;
   padding:4px 10px;border-radius:99px;
@@ -480,4 +478,43 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   }
 
   .chart-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ================= FITUR CEKLIS GAJI ================= */
+.check-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--muted);
+  background: transparent;
+  color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-right: 8px;
+  font-size: 12px;
+  font-weight: bold;
+  transition: all 0.2s;
+  vertical-align: middle;
+}
+.check-btn:hover {
+  border-color: var(--accent);
+}
+.check-btn.active {
+  background: #10b981;
+  border-color: #10b981;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+}
+
+/* Efek visual saat member sudah lunas */
+.member-row.paid .member-name,
+.member-row.paid .member-salary,
+.member-row.paid .muted {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+.member-row.paid .member-type {
+  opacity: 0.3;
 }
