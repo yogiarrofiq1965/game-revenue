@@ -100,7 +100,7 @@ function drawReferral() {
           const isPaid = m.isPaid;
           return `<div class="member-row ${isPaid ? 'paid' : ''}">
             <span class="member-name">
-              <button class="check-btn ${isPaid ? 'active' : ''}" data-toggle-paid="${m.id}" title="${isPaid ? 'Batal Lunas' : 'Tandai Lunas'}">
+              <button type="button" class="check-btn ${isPaid ? 'active' : ''}" data-toggle-paid="${m.id}" title="${isPaid ? 'Batal Lunas' : 'Tandai Lunas'}">
                 ${isPaid ? '✓' : ''}
               </button>
               ${m.name}
@@ -110,7 +110,7 @@ function drawReferral() {
             </span>
             <span class="muted">${rp(m.deposit)}</span>
             <span class="member-salary">${rp(salaryOf(m))}</span>
-            <button class="mini" data-del-member="${m.id}">Hapus</button>
+            <button type="button" class="mini" data-del-member="${m.id}">Hapus</button>
           </div>`;
         }).join('');
 
@@ -126,7 +126,7 @@ function drawReferral() {
               <div style="font-size:11px; color:var(--muted); text-transform:uppercase;">Sisa Gaji</div>
               <strong style="color:${unpaid > 0 ? 'var(--accent)' : '#10b981'}">${rp(unpaid)}</strong>
               <br>
-              <button class="mini" style="margin-top:8px" data-del-admin="${a.id}">Hapus admin</button>
+              <button type="button" class="mini" style="margin-top:8px" data-del-admin="${a.id}">Hapus admin</button>
             </div>
           </header>
           <div class="members">${rows || '<span class="muted">Belum ada member.</span>'}</div>
@@ -139,7 +139,7 @@ function drawCosts() {
   const rows = state.costs.map(c => `<tr>
     <td>${c.desc}</td>
     <td class="num">${rp(c.amount)}</td>
-    <td><button class="mini" data-del-cost="${c.id}">Hapus</button></td>
+    <td><button type="button" class="mini" data-del-cost="${c.id}">Hapus</button></td>
   </tr>`).join('');
   
   const el = $('#costRows');
@@ -232,32 +232,25 @@ if (closeSidebar) closeSidebar.addEventListener('click', () => toggleSidebar(fal
 if (drawerOverlay) drawerOverlay.addEventListener('click', () => toggleSidebar(false));
 
 function setPage(name) {
-  // 1. Ubah class active pada tombol menu
-  document.querySelectorAll('#nav button').forEach(b =>
+  document.querySelectorAll('#nav button[data-view]').forEach(b =>
     b.classList.toggle('active', b.dataset.view === name));
   
-  // 2. Sembunyikan semua halaman, lalu tampilkan yang dipilih
   document.querySelectorAll('.page').forEach(p =>
     p.classList.toggle('active', p.dataset.page === name));
   
-  // 3. Ubah judul halaman
   setText('#pageTitle', PAGE_TITLE[name] || 'Dashboard');
 
-  // 4. Tutup sidebar otomatis jika di mobile (HP)
   if (window.innerWidth <= 900) {
     toggleSidebar(false);
   }
 }
 
-// PERBAIKAN: Event listener untuk navigasi menu
-$('#nav').addEventListener('click', e => {
-  // Cari tombol terdekat dengan atribut data-view (mengabaikan jika yang diklik adalah SVG di dalamnya)
+// Event delegation global untuk navigasi
+document.addEventListener('click', e => {
   const btn = e.target.closest('button[data-view]');
   if (btn) {
+    e.preventDefault(); 
     setPage(btn.dataset.view);
-  } else {
-    // Jika user mengklik area menu lain yang bukan navigasi (misal garis pembatas), tutup sidebar
-    if (window.innerWidth <= 900) toggleSidebar(false);
   }
 });
 
