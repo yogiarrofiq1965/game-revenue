@@ -33,7 +33,7 @@ function metrics() {
 
 /* ===== Render ===== */
 const $ = sel => document.querySelector(sel);
-const setText = (sel, v) => { $(sel).textContent = v; };
+const setText = (sel, v) => { if($(sel)) $(sel).textContent = v; };
 
 const charts = { deposit: null, composition: null };
 const textColor = () => getComputedStyle(document.body).color;
@@ -45,6 +45,10 @@ function drawStats() {
   setText('#sOps', rp(m.ops));
   setText('#sSalary', rp(m.salary));
   setText('#sNet', rp(m.net));
+  
+  // Update teks di header HP
+  setText('#mobileNet', rp(m.net)); 
+
   $('#lockBadge').classList.toggle('hidden', !isLocked());
   setText('#pageDate', new Date().toLocaleDateString('id-ID',
     { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }));
@@ -174,7 +178,6 @@ function setPage(name) {
     p.classList.toggle('active', p.dataset.page === name));
   setText('#pageTitle', PAGE_TITLE[name]);
   
-  // Auto-hide sidebar di mobile setelah pilih menu
   if (window.innerWidth <= 900) {
     $('#sidebar').classList.add('hidden');
   }
@@ -182,118 +185,4 @@ function setPage(name) {
 
 $('#nav').addEventListener('click', e => {
   const btn = e.target.closest('button[data-view]');
-  if (btn) setPage(btn.dataset.view);
-});
-
-// Toggle Sidebar
-$('#menuToggle').addEventListener('click', () => {
-  $('#sidebar').classList.toggle('hidden');
-});
-
-function applyTheme(t) {
-  document.documentElement.dataset.theme = t;
-  localStorage.setItem(STORE + '-theme', t);
-  
-  const isDark = t === 'dark';
-  $('#themeDark')?.classList.toggle('active', isDark);
-  $('#themeLight')?.classList.toggle('active', !isDark);
-  
-  render();
-}
-
-$('#themeLight').addEventListener('click', () => applyTheme('light'));
-$('#themeDark').addEventListener('click', () => applyTheme('dark'));
-
-/* ===== Guard saat terkunci ===== */
-function blocked() {
-  if (isLocked()) alert('Hari ini terkunci. Klik "Hari Baru" untuk reset.');
-  return isLocked();
-}
-
-/* ===== Forms ===== */
-$('#adminForm').addEventListener('submit', e => {
-  e.preventDefault();
-  if (blocked()) return;
-  const name = $('#adminName').value.trim();
-  if (!name) return;
-  state.admins.push({ id: id(), name });
-  $('#adminName').value = '';
-  save(); render();
-});
-
-$('#memberForm').addEventListener('submit', e => {
-  e.preventDefault();
-  if (blocked()) return;
-  const name = $('#memberName').value.trim();
-  const adminId = $('#memberAdmin').value;
-  const type = $('#memberType').value;
-  const deposit = Number($('#memberDeposit').value);
-  if (!name || !adminId || !(deposit > 0)) return;
-  state.members.push({ id: id(), name, adminId, type, deposit });
-  $('#memberName').value = '';
-  $('#memberDeposit').value = '';
-  save(); render();
-});
-
-$('#costForm').addEventListener('submit', e => {
-  e.preventDefault();
-  if (blocked()) return;
-  const desc = $('#costDesc').value.trim();
-  const amount = Number($('#costAmount').value);
-  if (!desc || !(amount > 0)) return;
-  state.costs.push({ id: id(), desc, amount });
-  $('#costDesc').value = '';
-  $('#costAmount').value = '';
-  save(); render();
-});
-
-$('#payoutForm').addEventListener('submit', e => {
-  e.preventDefault();
-  if (blocked()) return;
-  state.payout = Math.max(0, Number($('#payoutCount').value) || 0);
-  save(); render();
-});
-
-/* ===== Hapus Data ===== */
-document.addEventListener('click', e => {
-  const t = e.target;
-  if (blocked()) return;
-  if (t.dataset.delAdmin) {
-    state.admins = state.admins.filter(a => a.id !== t.dataset.delAdmin);
-    state.members = state.members.filter(m => m.adminId !== t.dataset.delAdmin);
-  } else if (t.dataset.delMember) {
-    state.members = state.members.filter(m => m.id !== t.dataset.delMember);
-  } else if (t.dataset.delCost) {
-    state.costs = state.costs.filter(c => c.id !== t.dataset.delCost);
-  } else return;
-  save(); render();
-});
-
-/* ===== Snapshot & Reset ===== */
-$('#lockBtn').addEventListener('click', () => {
-  if (isLocked() || !confirm('Kunci angka hari ini?')) return;
-  state.lock = metrics();
-  save(); render();
-  if (window.innerWidth <= 900) $('#sidebar').classList.add('hidden');
-});
-
-$('#resetBtn').addEventListener('click', () => {
-  if (!confirm('Reset data harian? Admin referral tetap disimpan.')) return;
-  const admins = state.admins;
-  state = { ...blank(), admins };
-  save(); render();
-  if (window.innerWidth <= 900) $('#sidebar').classList.add('hidden');
-});
-
-/* Auto-lock saat 00:00 */
-setInterval(() => {
-  const now = new Date();
-  if (now.getHours() === 0 && now.getMinutes() === 0 && !isLocked()) {
-    state.lock = metrics(); save(); render();
-  }
-}, 60_000);
-
-/* ===== Init ===== */
-applyTheme(localStorage.getItem(STORE + '-theme') || 'dark');
-setPage('dashboard');
-render();
+  if (
