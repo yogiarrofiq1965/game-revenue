@@ -19,6 +19,7 @@
       </div>
     </div>
 
+    <!-- NAVIGASI -->
     <nav id="nav" class="nav">
       <button data-view="dashboard" class="active">Dashboard</button>
       <button data-view="referral">Referral</button>
@@ -26,9 +27,13 @@
       <button data-view="payout">Pencairan</button>
     </nav>
 
+    <!-- ACTIONS -->
     <div class="sidebar-actions">
-      <button id="themeToggle" class="ghost">Tema</button>
-      <button id="lockBtn" class="ghost">Kunci Hari Ini</button>
+      <div class="theme-switch">
+        <button id="themeLight" class="ghost btn-theme">☀️ Light</button>
+        <button id="themeDark" class="ghost btn-theme active">🌙 Dark</button>
+      </div>
+      <button id="lockBtn" class="ghost mt-8">Kunci Hari Ini</button>
       <button id="resetBtn" class="ghost danger">Hari Baru</button>
     </div>
   </aside>
@@ -74,7 +79,7 @@
       </section>
     </section>
 
-    <!-- REFERRAL (admin + member digabung) -->
+    <!-- REFERRAL -->
     <section data-page="referral" class="page">
       <section class="panel glass">
         <h2>Tambah Admin</h2>
@@ -86,9 +91,12 @@
 
       <section class="panel glass">
         <h2>Tambah Member</h2>
+        <p class="muted" style="margin-bottom: 10px;">Pilih admin secara manual jika member tidak mendaftar melalui link referral.</p>
         <form id="memberForm" class="inline-form">
           <input id="memberName" placeholder="Username" required>
-          <select id="memberAdmin" required></select>
+          <select id="memberAdmin" required>
+            <option value="" disabled selected>-- Pilih Admin --</option>
+          </select>
           <select id="memberType">
             <option value="first">Deposit pertama (50%)</option>
             <option value="repeat">Redeposit (40%)</option>
