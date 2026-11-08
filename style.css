@@ -31,6 +31,7 @@ body{
   color:var(--text);
   background:linear-gradient(135deg,var(--bg),var(--bg2));
   min-height:100vh;
+  min-height:100dvh;
 }
 .aurora{
   position:fixed;inset:0;z-index:0;pointer-events:none;
@@ -50,11 +51,12 @@ body{
   border-radius:var(--radius);
 }
 
-/* Tombol Hamburger */
+/* ===== Tombol Hamburger =====
+   Fixed di kiri atas, di luar sidebar, SELALU terlihat */
 .menu-toggle {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  position: fixed;
+  top: 16px;
+  left: 16px;
   width: 40px;
   height: 40px;
   display: flex;
@@ -69,25 +71,20 @@ body{
 }
 .menu-toggle:hover { border-color: var(--accent); }
 
-/* Layout */
+/* ===== Layout ===== */
 .shell{
   position:relative;z-index:1;
   display:flex;gap:20px;padding:20px;min-height:100vh;
 }
 
-/* Sidebar */
+/* ===== Sidebar (desktop: tampil normal) ===== */
 .sidebar{
   width:250px;padding:20px;display:flex;flex-direction:column;gap:24px;
   height:calc(100vh - 40px);position:sticky;top:20px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.sidebar.hidden {
-  margin-left: -290px; /* Menggeser sidebar keluar layar */
-  opacity: 0;
-  pointer-events: none;
+  transition: transform .3s cubic-bezier(0.4,0,0.2,1), opacity .3s;
 }
 
-.brand{display:flex;gap:10px;align-items:center; margin-top: 5px; padding-right: 45px;}
+.brand{display:flex;gap:10px;align-items:center; margin-top: 5px;}
 .brand-mark{font-size:24px;color:var(--accent); line-height: 1;}
 .brand strong{font-size: 15px;}
 .brand small{display:block;color:var(--muted);font-size:11px}
@@ -121,7 +118,7 @@ body{
   background: var(--accent); color: #fff;
 }
 
-/* Main Content */
+/* ===== Main Content ===== */
 .content{flex:1;display:flex;flex-direction:column;gap:16px;min-width:0}
 .topbar{padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
 .topbar h1{font-size:18px}
@@ -204,38 +201,33 @@ td .mini{
 [data-theme="light"] .member-type.repeat{ color:#7e22ce; border-color:rgba(126,34,206,.35); background:rgba(126,34,206,.08); }
 
 /* =========================================
-   MOBILE TAMPILAN (Di bawah 900px)
+   MOBILE (<= 900px)
    ========================================= */
-.mobile-header { display: none; } 
+.mobile-header { display: none; }
 
 @media (max-width: 900px) {
   .shell { padding: 0; display: block; }
   .topbar { display: none; }
-  
-  /* Sidebar Overlay Penuh */
+
+  /* Sidebar overlay; default tertutup di mobile */
   .sidebar {
     width: 260px; height: 100dvh; position: fixed;
     top: 0; left: 0; padding-top: 20px;
     border-radius: 0 20px 20px 0; border-left: none;
     z-index: 999;
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .sidebar:not(.closed) {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .content { padding: 16px; gap: 16px; margin-top: 56px; }
 
-  /* Tombol Garis 3 menempel di kiri layar saat sidebar tertutup */
-  .menu-toggle {
-    position: fixed;
-    top: 16px; left: 16px;
-    transform: translateX(0);
-  }
-  
-  /* Saat sidebar terbuka, tombol bergeser ke dalam sidebar */
-  .sidebar:not(.hidden) .menu-toggle {
-    position: absolute;
-    top: 20px; right: 20px; left: auto;
-  }
-
-  /* Header Mobile */
+  /* Mobile header greeting */
   .mobile-header {
     display: flex; justify-content: space-between; align-items: center;
     padding: 16px 20px; margin-bottom: 8px;
@@ -253,7 +245,7 @@ td .mini{
   .stat-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
   .stat { padding: 16px 14px; flex-direction: column; align-items: flex-start; gap: 12px; }
   .stat.full-width { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; }
-  
+
   .stat-icon {
     width: 36px; height: 36px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
@@ -263,14 +255,14 @@ td .mini{
   .icon-ops { background: rgba(244,114,182,.15); color: #f472b6; }
   .icon-fee { background: rgba(245,158,11,.15); color: #f59e0b; }
   .icon-net { background: rgba(34,197,94,.15); color: #22c55e; width: 48px; height: 48px; border-radius: 12px; }
-  
+
   .stat-info { display: flex; flex-direction: column; gap: 4px; }
   .stat-info span { font-size: 11px; }
   .stat-info strong { font-size: 16px; }
-  
+
   .chart-grid { grid-template-columns: 1fr; gap: 16px; }
   .panel { padding: 16px; }
-  
+
   .inline-form input, .inline-form select { min-width: 100%; }
   .inline-form .primary { width: 100%; margin-top: 4px; }
 }
@@ -292,4 +284,3 @@ td .mini{
   .member-salary { grid-area: salary; justify-self: end; }
   .member-row .mini { grid-area: del; justify-self: end; }
 }
-body { min-height: 100dvh; }
