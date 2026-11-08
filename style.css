@@ -66,7 +66,7 @@ body{
   border: 1px solid var(--card-border);
   box-shadow: var(--card-shadow);
   border-radius: var(--radius);
-  /* Sengaja tanpa backdrop-filter agar mobile tidak blur */
+  /* Tanpa backdrop-filter di mobile */
 }
 
 /* ================= LAYOUT ================= */
@@ -101,10 +101,10 @@ body{
   transform: translateX(0);
 }
 
-/* Overlay tanpa blur */
+/* PERBAIKAN: Overlay dibuat lebih transparan (0.3) */
 .drawer-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0, 0, 0, 0.3); 
   z-index: 999;
   opacity: 0;
   pointer-events: none;
@@ -437,8 +437,6 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
 
 /* ================= RESPONSIVE (DESKTOP) - EFFECT GLASS ================= */
 @media (min-width: 900px) {
-  /* Di sini kita terapkan efek Glass (Blur) hanya untuk Desktop */
-  
   :root {
     --glass-bg: rgba(30, 41, 59, 0.4);
     --glass-border: rgba(255, 255, 255, 0.08);
@@ -451,7 +449,6 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08);
   }
 
-  /* Ubah panel/card menjadi kaca di desktop */
   .glass-panel {
     background: var(--glass-bg) !important;
     backdrop-filter: blur(20px) !important;
@@ -460,7 +457,6 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     box-shadow: var(--glass-shadow) !important;
   }
 
-  /* Sidebar Desktop Kaca */
   .sidebar {
     transform: translateX(0);
     border-radius: 0;
@@ -470,7 +466,6 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     border-right: 1px solid var(--glass-border) !important;
   }
   
-  /* Layout Desktop */
   .app-container {
     padding-left: 280px;
   }
