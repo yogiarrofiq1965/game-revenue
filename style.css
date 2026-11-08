@@ -411,23 +411,50 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   }
 
   .chart-grid { grid-template-columns: 1fr 1fr; }
-  .desktop-only { display: flex !important; }
 }
 
+/* ================= RESPONSIVE (MOBILE) ================= */
 @media (max-width: 899px) {
-  .desktop-only { display: none !important; }
+  /* Form jadi bersusun ke bawah */
+  .inline-form input, .inline-form select, .inline-form .primary { 
+    width: 100%; 
+    min-width: 100%; 
+  }
   
-  .inline-form input, .inline-form select { min-width: 100%; }
-  .inline-form .primary { width: 100%; }
-  
+  /* Kartu statistik menyesuaikan layar kecil */
+  .stats-grid {
+    grid-template-columns: 1fr; 
+    gap: 16px;
+  }
+
+  .stat-item {
+    background: rgba(0,0,0,0.15);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+  }
+
+  /* Tabel & Grafik tetap tampil dengan scroll horizontal */
+  .table-wrap {
+    margin: 0 -24px;
+    padding: 0 24px;
+    width: calc(100% + 48px);
+  }
+
+  /* Grid Referral jadi 1 kolom */
   .member-row {
     grid-template-columns: 1fr auto;
     grid-template-areas: "name type" "dep salary" "del del";
     row-gap: 8px;
+    padding: 12px;
   }
   .member-name { grid-area: name; }
   .member-type { grid-area: type; justify-self: end; }
   .member-row .muted { grid-area: dep; font-size: 12px; }
   .member-salary { grid-area: salary; justify-self: end; }
-  .member-row .mini { grid-area: del; justify-self: end; margin-top: 4px; }
+  .member-row .mini { grid-area: del; justify-self: end; margin-top: 4px; width: 100%; }
+  
+  /* Penyesuaian padding panel di HP */
+  .panel { padding: 16px; }
+  .table-wrap { margin: 0 -16px; padding: 0 16px; width: calc(100% + 32px); }
 }
