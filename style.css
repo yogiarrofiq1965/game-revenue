@@ -91,6 +91,7 @@ body{
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   
   background: var(--bg);
   border-right: 1px solid var(--card-border);
@@ -108,6 +109,7 @@ body{
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s;
+  cursor: pointer;
 }
 .drawer-overlay.active {
   opacity: 1;
@@ -238,30 +240,33 @@ body{
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
+  gap: 8px;
 }
 .icon-btn {
   background: transparent; border: none; color: var(--text);
   width: 40px; height: 40px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer; transition: 0.3s;
+  flex-shrink: 0;
 }
 .icon-btn:hover { background: rgba(255,255,255,0.1); }
 
 .search-bar {
   flex: 1;
-  margin: 0 16px;
+  margin: 0 8px;
   color: var(--muted);
   display: flex; align-items: center; gap: 8px;
   background: rgba(0,0,0,0.15);
   padding: 8px 16px;
   border-radius: 99px;
   border: 1px solid var(--card-border);
+  min-width: 0;
 }
 .search-bar input {
   background: transparent; border: none; color: var(--text);
-  font: inherit; width: 100%; outline: none;
+  font: inherit; width: 100%; outline: none; min-width: 0;
 }
-.topbar-right { display: flex; align-items: center; gap: 8px; }
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .sun-icon { color: var(--muted); }
 .avatar {
   width: 40px; height: 40px; border-radius: 50%;
@@ -269,6 +274,7 @@ body{
   border: 1px solid var(--card-border);
   display: flex; align-items: center; justify-content: center;
   position: relative; color: var(--text);
+  flex-shrink: 0;
 }
 .status-dot {
   position: absolute; bottom: 0px; right: 0px;
@@ -393,6 +399,13 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
 /* Chart Grid */
 .chart-grid{display:grid;grid-template-columns:1fr;gap:20px}
 
+/* Chart canvas wrapper — beri tinggi eksplisit agar Chart.js responsif stabil */
+.chart-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 240px;
+}
+
 /* ================= FITUR CEKLIS GAJI ================= */
 .check-btn {
   width: 20px;
@@ -433,15 +446,35 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   opacity: 0.3;
 }
 
+/* ================= JUDUL HALAMAN (MOBILE) ================= */
+.page-title-mobile {
+  display: none;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-left: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+/* ================= FOKUS AKSESIBILITAS ================= */
+.inline-form input:focus-visible,
+.inline-form select:focus-visible,
+.primary:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 /* ================= RESPONSIVE (MOBILE) ================= */
 @media (max-width: 899px) {
-  /* Form jadi bersusun ke bawah */
   .inline-form input, .inline-form select, .inline-form .primary { 
     width: 100%; 
     min-width: 100%; 
   }
   
-  /* Kartu statistik jadi 1 kolom penuh (list style) */
   .stats-grid {
     grid-template-columns: 1fr; 
     gap: 16px;
@@ -454,7 +487,6 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     border: 1px solid var(--card-border);
   }
 
-  /* Wrapper tabel agar bisa di-scroll horizontal di HP */
   .table-wrap {
     margin: 0 -16px;
     padding: 0 16px;
@@ -462,12 +494,15 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   }
   
   table {
-    min-width: 600px; /* Memaksa tabel lebar agar rapi & bisa di-swipe */
+    min-width: 600px;
   }
 
   .panel { padding: 16px; }
 
-  /* Grid Referral Mobile agar tidak berdesakan */
+  .page-title-mobile {
+    display: block;
+  }
+
   .member-row {
     grid-template-columns: 1fr auto;
     grid-template-areas: 
@@ -493,8 +528,12 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   }
 }
 
+/* Sembunyikan search bar di layar sangat kecil agar judul muat */
+@media (max-width: 480px) {
+  .search-bar { display: none; }
+}
+
 /* ================= RESPONSIVE (DESKTOP) - EFFECT GLASS ================= */
-/* Efek kaca HANYA diterapkan pada layar di atas 900px (Desktop/Laptop) */
 @media (min-width: 900px) {
   :root {
     --glass-bg: rgba(30, 41, 59, 0.4);
@@ -508,7 +547,6 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     --glass-shadow: 0 8px 32px 0 rgba(15, 23, 42, 0.08);
   }
 
-  /* Efek Glass diaktifkan di Desktop */
   .glass-panel {
     background: var(--glass-bg) !important;
     backdrop-filter: blur(20px) !important;
@@ -526,7 +564,6 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
     border-right: 1px solid var(--glass-border) !important;
   }
   
-  /* Layout Desktop */
   .app-container {
     padding-left: 280px;
   }
@@ -541,4 +578,8 @@ td .mini:hover { background: rgba(244,63,94,0.2); }
   }
 
   .chart-grid { grid-template-columns: 1fr 1fr; }
+
+  .page-title-mobile {
+    display: none !important;
+  }
 }
