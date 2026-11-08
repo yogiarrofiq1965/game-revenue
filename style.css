@@ -72,7 +72,7 @@ body{
 /* ================= LAYOUT ================= */
 .app-container {
   position: relative;
-  z-index: 1;
+ /* z-index: 1; */
   display: flex;
   min-height: 100dvh;
 }
@@ -362,11 +362,11 @@ table{width:100%;border-collapse:collapse;font-size:13px;}
 th,td{padding:14px 10px;text-align:left;border-bottom:1px solid var(--card-border)}
 th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:1px}
 .num{text-align:right}
-td .mini{
+.mini{
   background:rgba(244,63,94,0.1); border:1px solid rgba(244,63,94,0.2); color:var(--danger);
   padding:6px 12px; border-radius:8px; font:inherit; font-size:12px; cursor:pointer; transition: 0.3s;
 }
-td .mini:hover { background: rgba(244,63,94,0.2); }
+.mini:hover { background: rgba(244,63,94,0.2); }
 
 /* Referral List */
 .referral-list{display:flex;flex-direction:column;gap:12px}
