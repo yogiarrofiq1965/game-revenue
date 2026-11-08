@@ -37,7 +37,6 @@ body{
   overflow-x:hidden;
 }
 
-/* Aurora Background lebih halus */
 .aurora{
   position:fixed;inset:0;z-index:0;pointer-events:none;
   background:
@@ -71,13 +70,14 @@ body{
   z-index: 1000;
   transform: translateX(-100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 20px;
+  padding: 24px 20px;
   border-radius: 0;
   border-right: 1px solid var(--stroke);
   border-top: none; border-bottom: none; border-left: none;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  background: var(--bg2); /* Warna solid gelap agar menu jelas */
 }
 .sidebar.open {
   transform: translateX(0);
@@ -101,41 +101,45 @@ body{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
 }
 .logo-area {
   font-size: 20px;
   font-weight: 900;
   letter-spacing: 1px;
   color: var(--text);
-  text-shadow: 0 0 10px var(--accent-glow);
+  text-transform: uppercase;
 }
-.logo-area strong { color: #fbbf24; } /* Warna emas mirip logo */
+.logo-area span { color: #fbbf24; }
 
 .close-btn {
-  color: var(--muted);
+  background: var(--glass);
+  border: 1px solid var(--stroke);
+  color: var(--text);
+  width: 36px; height: 36px;
+  border-radius: 8px;
 }
 
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 .nav-section {
   font-size: 11px;
   font-weight: 700;
   color: var(--muted);
   letter-spacing: 1px;
-  margin: 16px 0 8px 12px;
+  margin: 20px 0 10px 12px;
 }
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   background: none;
   border: none;
   color: var(--text);
-  padding: 12px 16px;
+  padding: 14px 16px;
   border-radius: 12px;
   font: inherit;
   font-size: 14px;
@@ -143,6 +147,7 @@ body{
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
+  width: 100%;
 }
 .nav-item:hover {
   background: var(--glass);
@@ -153,23 +158,24 @@ body{
   box-shadow: 0 4px 12px var(--accent-glow);
 }
 .nav-icon {
-  width: 20px; height: 20px;
-  opacity: 0.7;
+  width: 22px; height: 22px;
+  flex-shrink: 0;
 }
-.nav-item.active .nav-icon { opacity: 1; }
+.nav-text {
+  flex: 1;
+}
 .chevron {
   width: 16px; height: 16px;
-  margin-left: auto;
   opacity: 0.5;
 }
 
 .sidebar-actions {
   margin-top: 24px;
-  padding-top: 16px;
+  padding-top: 24px;
   border-top: 1px solid var(--stroke);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .theme-switch {
   display: flex; gap: 4px; background: var(--glass);
@@ -185,7 +191,7 @@ body{
 }
 .ghost {
   background: var(--glass); border: 1px solid var(--stroke); color: var(--text);
-  padding: 10px; border-radius: 10px; cursor: pointer; font: inherit; font-size: 13px;
+  padding: 12px; border-radius: 10px; cursor: pointer; font: inherit; font-size: 13px;
   transition: 0.2s;
 }
 .ghost:hover { border-color: var(--accent); }
@@ -210,7 +216,7 @@ body{
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 8px 12px;
   border-radius: var(--radius);
   background: var(--glass);
   border: 1px solid var(--stroke);
@@ -226,23 +232,27 @@ body{
 
 .search-bar {
   flex: 1;
-  margin: 0 16px;
+  margin: 0 12px;
   color: var(--muted);
-  display: flex; align-items: center;
+  display: flex; align-items: center; gap: 8px;
+}
+.search-bar input {
+  background: transparent; border: none; color: var(--text);
+  font: inherit; width: 100%; outline: none;
 }
 .topbar-right {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; align-items: center; gap: 8px;
 }
 .sun-icon { color: var(--muted); }
 .avatar {
   width: 36px; height: 36px; border-radius: 50%;
-  background: linear-gradient(135deg, #ef4444, #b91c1c); /* Warna avatar di gambar */
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
   border: 2px solid var(--glass-strong);
   position: relative;
 }
 .status-dot {
-  position: absolute; bottom: 0; right: 0;
-  width: 10px; height: 10px; border-radius: 50%;
+  position: absolute; bottom: -2px; right: -2px;
+  width: 12px; height: 12px; border-radius: 50%;
   background: #22c55e; border: 2px solid var(--bg);
 }
 
@@ -430,16 +440,17 @@ td .mini{
 /* ================= RESPONSIVE (DESKTOP) ================= */
 @media (min-width: 900px) {
   .app-container {
-    padding-left: 280px; /* Ruang untuk sidebar permanen */
+    padding-left: 280px;
   }
   
   .sidebar {
-    transform: translateX(0); /* Sidebar selalu terbuka */
+    transform: translateX(0);
     border-radius: 0;
+    background: var(--glass); /* Transparan kembali di desktop */
   }
   
   .drawer-overlay, #menuToggle, #closeSidebar {
-    display: none !important; /* Sembunyikan tombol mobile */
+    display: none !important;
   }
 
   .content {
@@ -454,11 +465,9 @@ td .mini{
 @media (max-width: 899px) {
   .desktop-only { display: none !important; }
   
-  /* Penyesuaian form untuk layar kecil */
   .inline-form input, .inline-form select { min-width: 100%; }
   .inline-form .primary { width: 100%; }
   
-  /* Grid referral jadi 1 kolom di HP */
   .member-row {
     grid-template-columns: 1fr auto;
     grid-template-areas: "name type" "dep salary" "del del";
