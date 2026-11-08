@@ -50,7 +50,7 @@ body{
   border-radius:var(--radius);
 }
 
-/* Tombol Hamburger (Diposisikan relatif terhadap Sidebar) */
+/* Tombol Hamburger */
 .menu-toggle {
   position: absolute;
   top: 20px;
@@ -82,7 +82,7 @@ body{
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .sidebar.hidden {
-  margin-left: -270px; /* Menggeser sidebar ke kiri luar layar (termasuk tombol) */
+  margin-left: -290px; /* Menggeser sidebar keluar layar */
   opacity: 0;
   pointer-events: none;
 }
@@ -222,14 +222,17 @@ td .mini{
 
   .content { padding: 16px; gap: 16px; margin-top: 56px; }
 
-  /* Tombol Garis 3 (Tampil jika menu tertutup) */
+  /* Tombol Garis 3 menempel di kiri layar saat sidebar tertutup */
   .menu-toggle {
     position: fixed;
     top: 16px; left: 16px;
-    transform: translateX(calc(100vw - 56px)); /* Menggeser ke kanan luar sidebar */
+    transform: translateX(0);
   }
-  .sidebar.hidden .menu-toggle {
-    transform: translateX(0); /* Menggeser ke kiri layar HP */
+  
+  /* Saat sidebar terbuka, tombol bergeser ke dalam sidebar */
+  .sidebar:not(.hidden) .menu-toggle {
+    position: absolute;
+    top: 20px; right: 20px; left: auto;
   }
 
   /* Header Mobile */
