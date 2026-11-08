@@ -55,7 +55,7 @@ body{
   position: fixed;
   top: 20px;
   left: 20px;
-  z-index: 100;
+  z-index: 1000;
   width: 44px;
   height: 44px;
   display: flex;
@@ -81,7 +81,7 @@ body{
   width:240px;padding:20px;display:flex;flex-direction:column;gap:24px;
   height:calc(100vh - 40px);position:sticky;top:20px;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
-  margin-left: 50px; /* Memberi ruang untuk tombol hamburger */
+  margin-left: 50px;
 }
 .sidebar.hidden {
   transform: translateX(-150%);
@@ -138,13 +138,14 @@ body{
 .page{display:none;flex-direction:column;gap:16px}
 .page.active{display:flex}
 
-/* Dashboard Cards */
+/* Dashboard Cards Desktop */
 .stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
 .stat{padding:18px;display:flex;flex-direction:column;gap:6px}
 .stat span{font-size:12px;color:var(--muted)}
 .stat strong{font-size:20px}
 .stat.accent{border-color:var(--accent)}
 .stat.accent strong{color:var(--accent)}
+.stat.full-width { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 16px; }
 
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .panel{padding:20px;display:flex;flex-direction:column;gap:14px}
@@ -208,24 +209,32 @@ td .mini{
 /* =========================================
    MOBILE TAMPILAN (Di bawah 900px)
    ========================================= */
-.mobile-header { display: none; } /* Sembunyikan di desktop */
+.mobile-header { display: none; } 
 
 @media (max-width: 900px) {
+  /* Container Utama Mobile */
   .shell { padding: 0; display: block; }
+  
+  /* Sembunyikan header desktop di HP */
   .topbar { display: none; }
+
+  /* Posisi Tombol Garis 3 */
   .menu-toggle {
     top: 16px; left: 16px; width: 40px; height: 40px;
     background: var(--glass); border: 1px solid var(--stroke);
-    z-index: 1000; border-radius: 50%;
   }
+
+  /* Sidebar Overlay Penuh */
   .sidebar {
-    width: 260px; height: 100vh; position: fixed;
+    width: 260px; height: 100dvh; position: fixed;
     top: 0; left: 0; margin-left: 0; padding-top: 80px;
     border-radius: 0 20px 20px 0; border-left: none;
     z-index: 999;
   }
   .sidebar.hidden { transform: translateX(-100%); opacity: 0; }
-  .content { padding: 16px; gap: 16px; margin-top: 10px; }
+
+  /* Content Area Mobile */
+  .content { padding: 16px; gap: 16px; margin-top: 56px; }
 
   /* Header Mobile */
   .mobile-header {
