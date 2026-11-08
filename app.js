@@ -161,7 +161,7 @@ function render() {
   drawCosts(); drawPayout(); drawCharts();
 }
 
-/* ===== Navigasi & tema ===== */
+/* ===== Navigasi & Tema ===== */
 const PAGE_TITLE = {
   dashboard: 'Dashboard', referral: 'Referral',
   costs: 'Biaya Operasional', payout: 'Pencairan'
@@ -173,11 +173,21 @@ function setPage(name) {
   document.querySelectorAll('.page').forEach(p =>
     p.classList.toggle('active', p.dataset.page === name));
   setText('#pageTitle', PAGE_TITLE[name]);
+  
+  // Auto-hide sidebar di mobile setelah pilih menu
+  if (window.innerWidth <= 900) {
+    $('#sidebar').classList.add('hidden');
+  }
 }
 
 $('#nav').addEventListener('click', e => {
   const btn = e.target.closest('button[data-view]');
   if (btn) setPage(btn.dataset.view);
+});
+
+// Toggle Sidebar
+$('#menuToggle').addEventListener('click', () => {
+  $('#sidebar').classList.toggle('hidden');
 });
 
 function applyTheme(t) {
@@ -200,7 +210,7 @@ function blocked() {
   return isLocked();
 }
 
-/* ===== Form ===== */
+/* ===== Forms ===== */
 $('#adminForm').addEventListener('submit', e => {
   e.preventDefault();
   if (blocked()) return;
@@ -244,7 +254,7 @@ $('#payoutForm').addEventListener('submit', e => {
   save(); render();
 });
 
-/* ===== Hapus (event delegation) ===== */
+/* ===== Hapus Data ===== */
 document.addEventListener('click', e => {
   const t = e.target;
   if (blocked()) return;
@@ -259,11 +269,12 @@ document.addEventListener('click', e => {
   save(); render();
 });
 
-/* ===== Snapshot ===== */
+/* ===== Snapshot & Reset ===== */
 $('#lockBtn').addEventListener('click', () => {
   if (isLocked() || !confirm('Kunci angka hari ini?')) return;
   state.lock = metrics();
   save(); render();
+  if (window.innerWidth <= 900) $('#sidebar').classList.add('hidden');
 });
 
 $('#resetBtn').addEventListener('click', () => {
@@ -271,6 +282,7 @@ $('#resetBtn').addEventListener('click', () => {
   const admins = state.admins;
   state = { ...blank(), admins };
   save(); render();
+  if (window.innerWidth <= 900) $('#sidebar').classList.add('hidden');
 });
 
 /* Auto-lock saat 00:00 */
